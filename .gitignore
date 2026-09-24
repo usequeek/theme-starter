@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+.env*
+.DS_Store
+# Next writes these for coding agents on first `npm run dev`; they are not part of the theme.
+AGENTS.md
+CLAUDE.md
