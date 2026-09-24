@@ -113,7 +113,10 @@ section's style, then fills them with the merchant's own products, photos and co
 - **No two templates may share a home page.** Use a different section order and different
   variants.
 - **Write copy as a template, not as one shop.** "Wash, deep condition and braid" works for
-  any hair store. Queek rewrites the copy for each merchant.
+  any hair store. Queek publishes a template's copy onto new stores as it is, so never name
+  your demo store, a place or the year it opened, and never state a price or promise
+  (delivery times, return periods, free delivery, guarantees). Testimonials and reviews are exempt. The check
+  enforces this.
 - **Photos:** reference any public URL. Queek moves them to its CDN when your theme is
   published. Never use a real brand's photography.
 - **Screenshots:** a 1280×800 capture of each template's first screen, `theme/theme.jpg` for

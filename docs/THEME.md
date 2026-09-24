@@ -1,9 +1,10 @@
 > **This is the contract every Queek theme is checked against when it is submitted.**
 > It is maintained in Queek's storefront repository and copied here on every
 > release of this starter. Commands such as `yarn theme:check`, `yarn theme:new`
-> and `yarn theme:pull` run on Queek's side today; in this repository you run
-> `npm run dev`, `npm run typecheck` and `npm run build`, and your theme is the
-> `theme/` folder (what the contract calls `themes/<slug>/`).
+> and `yarn theme:pull` run on Queek's side; in this repository you run
+> `npm run dev`, `npm run check` (the same rules, as `queek-theme check`) and
+> `npm run package`, and your theme is the `theme/` folder (what the contract
+> calls `themes/<slug>/`).
 
 # Theme Specification
 
@@ -17,19 +18,26 @@ You do not need access to this codebase. The framework is published:
 npm install @usequeek/theme-kit
 ```
 
-Start from **[github.com/usequeek/theme-starter](https://github.com/usequeek/theme-starter)**
-(public) — a complete Next app that renders a theme as a whole store, every page
-of every demo store, with no backend and no vendor account:
+Start with **`npm create @usequeek/theme my-theme`** — it copies the public
+[theme starter](https://github.com/usequeek/theme-starter) (theme files only, like
+Shopify's skeleton-theme) and installs the tools, `@usequeek/theme-cli`
+([github.com/usequeek/theme-tools](https://github.com/usequeek/theme-tools)):
 
 ```bash
-git clone https://github.com/usequeek/theme-starter.git my-theme
-cd my-theme && npm install && npm run dev
+npm create @usequeek/theme my-theme
+cd my-theme
+npm run dev       # queek-theme dev: every page of every demo store, real Next.js
+npm run check     # queek-theme check: this document's rules, on your machine
+npm run package   # queek-theme package: a zip for submission
 ```
 
 Everything below still applies: the starter ships the same `_bare` skeleton
 `yarn theme:new` scaffolds (as `theme/`), this document (as `docs/THEME.md`) and the
-business vocabulary. It is assembled from this repo by `yarn starter:publish`, and
-`yarn verify-starter` (CI) builds that exact assembly against the published kit.
+business vocabulary. `queek-theme check` runs the same rules as `yarn theme:check`
+except the few that need Queek's side (divergence from our themes, the render probe,
+art and screenshot upload), which it lists. The starter is assembled from this repo
+by `yarn starter:publish`; `yarn verify-starter` (CI) proves the whole journey against
+the published tools.
 
 Send the finished theme as a git URL or a directory. It comes in through
 `yarn theme:pull <source>`, which rehosts your demo art onto our CDN, runs the
@@ -812,10 +820,17 @@ header_variant, footer_variant, tokens`, plus `home_composition` /
 `page_compositions` whose slots are `{type, variant, style?, copy?}`, and
 `variant_images`. `copy` is the section's words — its declared text fields and the
 text keys of its list entries (steps, slides, FAQ), never links, images, alt text,
-ids or prices; the backend builds a section with no vendor facts behind it from
-them and qee rewrites them. So write demo copy as a template would say it ("Wash,
-deep condition and braid"), not as one shop would ("filled by hand in our Lekki
-studio").
+ids, prices or the demo store's own facts (email, phone, address, hours, coupon
+code); the backend builds a section with no vendor facts behind it from them and
+qee rewrites them. The setup wizard publishes a template's homepage onto a new
+store **unchanged**, so write demo copy as a template would say it ("Wash, deep
+condition and braid"), not as one shop would ("filled by hand in our Lekki
+studio"): **no store name** (say "our kitchen", "the studio"), **no place**
+("across the city", or drop it), **no naira amount and no promise only the vendor
+can make** (delivery windows, return periods, free delivery, guarantees), and **no
+founding date** ("since 2014").
+Testimonials and reviews are exempt: their copy never reaches a real store.
+`theme/template-copy` rejects the rest (contract R2.6).
 `tokens` is the store's `config.tokens` — always the dials (sizes, weights,
 spacing, radius, motion); the colours and faces only when the theme's CSS reads
 the kit's colour/face vars (`--brand-*`, `--font-heading`/`--font-body`). A theme
