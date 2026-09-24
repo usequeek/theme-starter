@@ -1,21 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "jsx": "preserve",
     "module": "esnext",
     "moduleResolution": "bundler",
     "strict": true,
     "noEmit": true,
-    "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "incremental": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./*"] }
+    "types": ["node", "react", "react-dom"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["theme/**/*.ts", "theme/**/*.tsx"],
+  "exclude": ["node_modules", ".queek"]
 }

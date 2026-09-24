@@ -1,18 +1,26 @@
-# Runs on every push and pull request: the theme type-checks and the preview
-# builds against the published @usequeek/theme-kit — what Queek does first when
-# you submit.
+# Runs on every push and pull request: the theme type-checks, and passes the
+# Queek theme check — the same rules Queek runs when you submit, with any
+# findings annotated on the pull request.
 name: CI
 on:
   push:
   pull_request:
+permissions:
+  contents: read
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
-      - run: npm run build
+      # The starter itself ships a placeholder template description on purpose,
+      # so an unedited copy cannot be submitted. Write yours in
+      # theme/theme.config.ts and this step checks everything.
+      - if: github.repository != 'usequeek/theme-starter'
+        run: npx queek-theme check --format github-actions
