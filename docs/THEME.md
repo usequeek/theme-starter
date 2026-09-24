@@ -828,7 +828,7 @@ condition and braid"), not as one shop would ("filled by hand in our Lekki
 studio"): **no store name** (say "our kitchen", "the studio"), **no place**
 ("across the city", or drop it), **no naira amount and no promise only the vendor
 can make** (delivery windows, return periods, free delivery, guarantees), and **no
-founding date** ("since 2014").
+founding date** ("since 2014") or email and phone number in the words.
 Testimonials and reviews are exempt: their copy never reaches a real store.
 `theme/template-copy` rejects the rest (contract R2.6).
 `tokens` is the store's `config.tokens` — always the dials (sizes, weights,

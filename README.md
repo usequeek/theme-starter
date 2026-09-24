@@ -114,7 +114,7 @@ section's style, then fills them with the merchant's own products, photos and co
   variants.
 - **Write copy as a template, not as one shop.** "Wash, deep condition and braid" works for
   any hair store. Queek publishes a template's copy onto new stores as it is, so never name
-  your demo store, a place or the year it opened, and never state a price or promise
+  your demo store, a place, the year it opened or its email and phone, and never state a price or promise
   (delivery times, return periods, free delivery, guarantees). Testimonials and reviews are exempt. The check
   enforces this.
 - **Photos:** reference any public URL. Queek moves them to its CDN when your theme is
