@@ -103,7 +103,10 @@ section's style, then fills them with the merchant's own products, photos and co
     { id: 'food', label: 'Restaurant & kitchen', for: ['foods', 'local-meals'], description: '…' },
   ],
   ```
-  `for` uses only keys from `docs/business-vocabulary.json`, most specific first.
+  `for` uses only keys from `docs/business-vocabulary.json`, most specific first. A template
+  for a whole business (clothes, food) names its business category (`fashion`, `foods`); a
+  template for one kind of product (hair, shoes, jewellery) names only its product keys
+  (`wigs-extensions-hair-accessories`), never the business.
   `description` is at most 300 characters and says who the template fits, the look, its
   signature sections and the photos it needs. Queek's AI picks templates for merchants from
   it. The starter ships a placeholder description the check rejects, so write yours.

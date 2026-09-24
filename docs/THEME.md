@@ -801,6 +801,15 @@ What each template must carry (theme-check rejects a gap):
   from what they sell and ranks a specific match above a broad one. The primary's
   goes in `default_demo: { for }` and names **its own** business — it used to inherit
   the theme's `categories`, so a food vendor was offered medley's beauty store.
+  **General or niche** (contract R2.7): the backend matches a store first by the
+  business category the merchant picked at setup (the service slugs), and by product
+  categories only as the fallback and the niche signal. A **general** template (a
+  business as a whole: clothes, food, beauty) names its business category (`fashion`,
+  `foods`, `beauty-cosmetics`) and may add catalogue keys. A **niche** template (one
+  kind of product inside a business: hair, shoes, jewellery, coffee) names **only**
+  its catalogue keys (`["jewelry", "bags-accessories"]`, `["beverages"]`): naming the
+  business would make it compete as a general template, and a makeup seller with no
+  categorised products could be handed the wig store.
 - **A `label`** naming the business the template is dressed as — `Restaurant &
   kitchen`, not `Food`. The primary's goes in `default_demo: { label }` (it falls
   back to the theme's name, which tells a merchant nothing next to the others);
