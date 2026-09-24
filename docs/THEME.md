@@ -124,6 +124,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Re-implement framework-owned blocks — these live in `@usequeek/theme-kit/shared-blocks`; themes style them via CSS only (see Framework-Owned Blocks below)
 - Generate variant thumbnails — Queek's build pipeline handles this centrally (see Variant Thumbnails below)
 - Reference an external image host or a local file from `demo.json` — run `yarn theme:rehost-images` and commit the rewritten file (see Demo Art Hosting below)
+- Load fonts with `next/font/google` or a `fonts.googleapis.com` `@import` — ship the files in `themes/<slug>/fonts/` (see Fonts below)
 - Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. `tests/vendor-shell-ssr.test.tsx` server-renders every theme's chrome
 
 ---
@@ -482,6 +483,39 @@ are resolved server-side — block data always reaches a theme as literals.
 
 ---
 
+## Fonts
+
+A theme's fonts ship **as files inside the theme** — `themes/<slug>/fonts/` — never
+fetched from Google, at build time or on page load. `yarn theme:check` enforces it
+(`theme/fonts-self-hosted`).
+
+- **`next/font/google` is rejected.** It downloads the fonts during `next build`, and
+  Google intermittently answers with `fonts.gstatic.com/l/font?kit=…&skey=…` URLs that
+  Turbopack cannot parse — the build fails with *"next/font/google queries have exactly
+  one entry"* ([vercel/next.js#99114](https://github.com/vercel/next.js/issues/99114)).
+  It failed a production deploy on 23/9/26.
+- **A Google Fonts `@import` in your CSS is flagged.** The bundler silently drops it
+  unless it ends up the very first rule of the compiled stylesheet; when it survives,
+  every page waits on an extra render-blocking request to Google.
+
+How to add one (see `themes/carat/fonts/` for a complete example):
+
+1. Put the `.woff2` files in `themes/<slug>/fonts/` — one file per subset (latin,
+   latin-ext for ₦ and accented letters, vietnamese for Yoruba ẹ/ọ, …).
+2. Declare them in `themes/<slug>/fonts/fonts.css` with `@font-face` — `font-display:
+   swap` and the subset's `unicode-range`, so a browser downloads only the files the
+   page's text needs.
+3. Add a size-adjusted fallback face (`src: local("Arial")` with `size-adjust` /
+   `ascent-override` / `descent-override`) so swapping in the real font doesn't shift
+   the layout, and expose the pair as a CSS variable on your theme root:
+   `.theme-<slug> { --my-font: "Jost", "Jost Fallback"; }`.
+4. `import './fonts/fonts.css';` at the top of `layout.tsx`, before `theme.css`.
+
+Or use `next/font/local` pointed at the file — it reads from the repo, never the
+network, and computes the fallback metrics for you (one subset per call). Never
+`preload` a theme font: every theme's layout is in every store's bundle, so a preload
+downloads it on every store, whatever its theme.
+
 ## Smart Placeholders
 
 When a vendor's image field is empty, `<Image>` generates a theme-aware SVG placeholder (brand gradient + typographic label at the correct aspect ratio). To opt in, pass a `placeholder` prop:
@@ -796,7 +830,7 @@ What each template must carry (theme-check rejects a gap):
   platform's vocabulary only (`lib/storefront/business-vocabulary.json`): service
   slugs a vendor registers as (`foods`, `beauty-cosmetics`…) and the marketplace
   catalogue's roots and branches (`beauty-personal-care` → `makeup`,
-  `wigs-extensions-hair-accessories`…), most specific first. The catalogue keys are
+  `wigs-extensions-hair-accessories`…). The catalogue keys are
   what tell a wig seller from a makeup seller; the backend reads a vendor's business
   from what they sell and ranks a specific match above a broad one. The primary's
   goes in `default_demo: { for }` and names **its own** business — it used to inherit
@@ -804,8 +838,8 @@ What each template must carry (theme-check rejects a gap):
   **General or niche** (contract R2.7): the backend matches a store first by the
   business category the merchant picked at setup (the service slugs), and by product
   categories only as the fallback and the niche signal. A **general** template (a
-  business as a whole: clothes, food, beauty) names its business category (`fashion`,
-  `foods`, `beauty-cosmetics`) and may add catalogue keys. A **niche** template (one
+  business as a whole: clothes, food, beauty) **leads with** its business category
+  (`fashion`, `foods`, `beauty-cosmetics`) and may add catalogue keys after it. A **niche** template (one
   kind of product inside a business: hair, shoes, jewellery, coffee) names **only**
   its catalogue keys (`["jewelry", "bags-accessories"]`, `["beverages"]`): naming the
   business would make it compete as a general template, and a makeup seller with no

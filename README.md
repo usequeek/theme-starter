@@ -98,13 +98,13 @@ section's style, then fills them with the merchant's own products, photos and co
 - **Declare each one** in `theme/theme.config.ts`. The primary goes in `default_demo`, the
   others in `demos`:
   ```ts
-  default_demo: { label: 'Skincare & make-up', for: ['makeup', 'skincare', 'beauty-cosmetics'], description: '…' },
+  default_demo: { label: 'Skincare & make-up', for: ['beauty-cosmetics', 'makeup', 'skincare'], description: '…' },
   demos: [
     { id: 'food', label: 'Restaurant & kitchen', for: ['foods', 'local-meals'], description: '…' },
   ],
   ```
-  `for` uses only keys from `docs/business-vocabulary.json`, most specific first. A template
-  for a whole business (clothes, food) names its business category (`fashion`, `foods`); a
+  `for` uses only keys from `docs/business-vocabulary.json`. A template
+  for a whole business (clothes, food) leads with its business category (`fashion`, `foods`); a
   template for one kind of product (hair, shoes, jewellery) names only its product keys
   (`wigs-extensions-hair-accessories`), never the business.
   `description` is at most 300 characters and says who the template fits, the look, its
