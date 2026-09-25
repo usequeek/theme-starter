@@ -788,38 +788,67 @@ Must mirror the vendor bootstrap shape. Required minimums:
 | `pages.home` | — | MUST include ALL component types (see Homepage Requirement above) |
 | `menus` | 1 | Header menu with Collections, About, Blog, Contact |
 
-### Alternative demo stores
+<a id="alternative-demo-stores"></a>
 
-A theme can ship more than one store. `demo.json` is the primary — the one the
-thumbnail, the section-library capture and the registry's top-level compositions
-come from. Each extra store is a file under `demos/` in the same shape, declared
-in `theme.config.ts`:
+### Designs: more than one demo store
+
+A theme can ship more than one demo store. Each store is a **design**. `demo.json` is
+the main one (id `default`): the thumbnail, the section-library capture and the
+registry's top-level compositions come from it. Each extra design is a file under
+`demos/` in the same shape, declared in `theme.config.ts` with the **template** (the
+business) it belongs to:
 
 ```
 themes/roast/
-  demo.json              # the primary — a coffee roastery
+  demo.json              # the main design: a coffee roastery (template coffee)
   demos/
-    foods.json           # the same theme as a restaurant & takeaway
-    foods.jpg            # optional 1280×800 thumbnail for this store
+    foods.json           # design 1 of the foods template: a restaurant & takeaway
+    foods.jpg            # its 1280×800 screenshot
+    foods-2.json         # design 2 of the foods template: a grill house
+    foods-2.jpg
 ```
 
 ```ts
 // theme.config.ts
+default_demo: { template: 'coffee', label: 'Coffee & café', design_label: 'Roastery', for: ['beverages'], description: '…' },
 demos: [
-  { id: 'foods', label: 'Restaurant & takeaway', for: ['foods', 'local-meals', 'suya'] },
+  { id: 'foods', template: 'foods', label: 'Restaurant & takeaway', design_label: "Today's pot", for: ['foods', 'local-meals'], description: '…' },
+  // A second design of the same template: same business, a different design.
+  { id: 'foods-2', template: 'foods', label: 'Restaurant & takeaway', design_label: 'Grill house', for: ['foods', 'local-meals'], description: '…' },
 ],
 ```
 
-- **`id`** — lowercase slug; it becomes the URL and the filename. `default` is
-  reserved for `demo.json`.
-- **`label`** — what a merchant sees in the picker.
-- **`for`** — the business slugs this store is the right preview for, in the same
-  vocabulary as `categories` (the vendor's `service_slug` / `service_type`). The
-  backend offers a matching vendor this store instead of the primary.
+- **`id`**: the design id, a lowercase slug. It becomes the URL and the filename, and
+  it is what a store saves when a merchant picks it, so **never rename a shipped id**.
+  `default` is reserved for `demo.json`.
+- **`template`**: the key of the template (the business) the design belongs to,
+  **on every design**, `default_demo` included. A lowercase slug, never `default`,
+  never renamed once shipped. Template keys and design ids share one namespace: the
+  main template's key may not be a design id.
+- **`label`**: the business, as a merchant sees it (`Restaurant & takeaway`). It
+  names the template, so a template's designs all carry the same one.
+- **`design_label`**: what tells this design from the template's others (`Grill
+  house`). Required when a template has two or more designs; Queek writes one on
+  every design.
+- **`for`**: the business slugs the template is the right store for, in the same
+  vocabulary as `categories`. Same on every design of a template.
 
-Every store previews at `preview.<domain>/<slug>~<id>` — `/roast~foods`,
-`/roast~foods/shop`, and so on — and every link inside it stays on that store.
-The registry publishes each as `demos[]` with its own `preview_url`,
+**Design 1** of a template is the design whose id is its key (`foods`; `default` for
+the main template). The others follow in `demos[]` order. `label` and `for` are the
+template's, declared on design 1; a later design repeats them for now, because the
+published checker still requires both on every `demos[]` entry.
+
+Every design previews at its own URL, and every link inside it stays on that design:
+
+| URL | shows |
+|---|---|
+| `preview.<domain>/roast` | the **template gallery** (a theme with 2+ templates) |
+| `preview.<domain>/roast~coffee` | the main design, `demo.json` (the main template's key) |
+| `preview.<domain>/roast~foods`, `/roast~foods/shop` | design 1 of the foods template |
+| `preview.<domain>/roast~foods-2` | design 2 of the foods template |
+| `preview.<domain>/allure` | the store of a single-template theme (no gallery) |
+
+The registry publishes each design as a `demos[]` entry with its own `preview_url`,
 `home_composition`, `page_compositions` and `variant_images`.
 
 What the checker asks of a store, primary or not: the minimums above, Queek-hosted
@@ -833,33 +862,37 @@ variant.
 
 ## Templates
 
-Every demo store is a **template**: a merchant (or Qee, the AI, on their behalf)
-picks ONE, and the backend builds the vendor's store from that template's layout —
-its sections and variants, its header and footer, its dials and each section's
-`style` — then fills every content slot with the vendor's own material. The
-preview at `/<slug>~<id>` is what the vendor gets, content aside. A theme ships
-one template per business it serves, and up to three versions of each (`food`,
-`food-2`, `food-3`). The backend publishes exactly what this section describes; it is agreed
-with the backend team and changes only together with it.
+**Theme → template → design** (contract R2.8). The **theme** is the look. A
+**template** is a business the theme is dressed as (medley's Food, Hair). A **design**
+is one concrete store of a template, one demo file: `food` and `food-2` are the Food
+template's two designs. "Version" and "preset" are not words we use.
 
-What each template must carry (theme-check rejects a gap):
+A merchant (or Qee, the AI, on their behalf) picks ONE design, and the backend builds
+the vendor's store from its layout — its sections and variants, its header and
+footer, its dials and each section's `style` — then fills every content slot with the
+vendor's own material. The preview at `/<slug>~<id>` is what the vendor gets, content
+aside. A theme ships one template per business it serves, and up to three designs of
+each. The backend publishes exactly what this section describes; it is agreed with
+the backend team and changes only together with it.
+
+What each design must carry (theme-check rejects a gap):
 
 - **`description`** (`theme/template-description`) — ≤ 300 characters, written
   for a model choosing on a merchant's behalf: who it fits · the look · the
-  signature sections · what material it needs to look right. The primary's goes
-  in `theme.config.ts` → `default_demo: { description }`; each other template's
+  signature sections · what material it needs to look right. The main design's goes
+  in `theme.config.ts` → `default_demo: { description }`; each other design's
   on its `demos[]` entry.
 
   > "Premium food. Dark, photo-led: full-bleed dish hero, tabbed menu, chef story,
   > reviews strip. Best for restaurants with 6+ strong dish photos."
 
 - **A screenshot** (`theme/template-screenshot`) — `theme.jpg` (or `.png`) for the
-  primary, `demos/<id>.jpg` for the rest, 1280×800, the template's first screen,
-  captured by `yarn theme:capture <slug>` (see [theme.png](#themepng)).
-  The AI looks at it before committing. `yarn theme:rehost-images --theme <slug>`
-  (also run by `yarn theme:check <slug> --fix`) uploads it to
-  `media.usequeek.com/theme-assets/<slug>/<sha256[..16]>.jpg` and records it in
-  the theme's `screenshots.json`; the registry publishes that absolute URL as
+  main design, `demos/<id>.jpg` for the rest, 1280×800, the design's first screen,
+  captured by `yarn theme:capture <slug>` at the design's own URL (see
+  [theme.png](#themepng)). The AI looks at it before committing.
+  `yarn theme:rehost-images --theme <slug>` (also run by `yarn theme:check <slug> --fix`)
+  uploads it to `media.usequeek.com/theme-assets/<slug>/<sha256[..16]>.jpg` and records
+  it in the theme's `screenshots.json`; the registry publishes that absolute URL as
   `preview_image`, and the `public/` copy as `screenshot` for this storefront's own
   pages. Re-capture a screenshot and it must be uploaded again — the URL is its
   content hash.
@@ -869,9 +902,10 @@ What each template must carry (theme-check rejects a gap):
   catalogue's roots and branches (`beauty-personal-care` → `makeup`,
   `wigs-extensions-hair-accessories`…). The catalogue keys are
   what tell a wig seller from a makeup seller; the backend reads a vendor's business
-  from what they sell and ranks a specific match above a broad one. The primary's
-  goes in `default_demo: { for }` and names **its own** business — it used to inherit
-  the theme's `categories`, so a food vendor was offered medley's beauty store.
+  from what they sell and ranks a specific match above a broad one. The main
+  template's goes in `default_demo: { for }` and names **its own** business — it used
+  to inherit the theme's `categories`, so a food vendor was offered medley's beauty store.
+  Every design of a template has the same `for`.
   **General or niche** (contract R2.7): the backend matches a store first by the
   business category the merchant picked at setup (the service slugs), and by product
   categories only as the fallback and the niche signal. A **general** template (a
@@ -881,10 +915,14 @@ What each template must carry (theme-check rejects a gap):
   its catalogue keys (`["jewelry", "bags-accessories"]`, `["beverages"]`): naming the
   business would make it compete as a general template, and a makeup seller with no
   categorised products could be handed the wig store.
-- **A `label`** naming the business the template is dressed as — `Restaurant &
-  kitchen`, not `Food`. The primary's goes in `default_demo: { label }` (it falls
-  back to the theme's name, which tells a merchant nothing next to the others);
-  each other template's on its `demos[]` entry.
+- **A `template` key and a `label`** naming the business the template is dressed as —
+  `Restaurant & kitchen`, not `Food`. The main template's go in
+  `default_demo: { template, label }` (the label falls back to the theme's name, which
+  tells a merchant nothing next to the others); each other template's on its design
+  1's `demos[]` entry.
+- **A `design_label`** on each design of a template with two or more designs,
+  unique within the template and true of any store (the same copy rules as below:
+  `Neighbourhood buka`, never `Lekki buka` or `Mama Tee's buka`).
 - **Chrome the theme implements** (`theme/template-chrome`) — `config.header.variant`
   and `config.footer.variant` name variants the theme declares. The registry
   publishes them as `header_variant` / `footer_variant`.
@@ -894,11 +932,33 @@ What each template must carry (theme-check rejects a gap):
   section's own variant does not declare is rejected: it would be copied onto
   every store built from the template and do nothing.
 
-What the registry publishes per template (`demos[]` in `/api/theme-registry`):
-`id, label, for, description, preview_url, preview_image, screenshot,
-header_variant, footer_variant, tokens`, plus `home_composition` /
-`page_compositions` whose slots are `{type, variant, style?, copy?}`, and
-`variant_images`. `copy` is the section's words — its declared text fields and the
+The R2.8 checks (explicit `template` on every design, one `for` per template,
+`design_label` for 2+ designs, at most three designs per template, keys and ids in one
+namespace) arrive as a new rule, `theme/template-designs`, with the next
+`@usequeek/theme-check` release; until then `theme/template-versions` still reads
+the `-2` suffix. Write the fields now: the resolver (`lib/storefront/utils/theme-designs.ts`)
+and the registry already group by them.
+
+What the registry publishes per design (`demos[]` in `/api/theme-registry`):
+`id, template, template_label, design_index, design_label, label, for, description,
+preview_url, preview_image, screenshot, header_variant, footer_variant, tokens`,
+plus `home_composition` / `page_compositions` whose slots are
+`{type, variant, style?, copy?}`, and `variant_images`.
+
+- `template` / `template_label` — the template's key and label; `design_index` —
+  1 for design 1, then 2, 3 with no gaps; `design_label` — as declared (null only on
+  a one-design template that declares none).
+- `label` — for readers that know no templates: the template label for a one-design
+  template, `template_label — design_label` on **every** design of a 2+ design
+  template, design 1 included (`Restaurant & kitchen — Dining room`,
+  `Restaurant & kitchen — Neighbourhood buka`), so two cards never read alike.
+- `for` — the template's, identical on each of its designs.
+- `preview_url` — the design's own URL: `/medley~food-2`; `/medley~beauty` for the
+  main design of a theme with a gallery; `/allure` for a single-template theme.
+- Theme level: `preview_url` is the main design's URL (it matches `preview_image`,
+  `theme.jpg`), and `gallery_url` is `/<slug>` for a theme with 2+ templates, else `null`.
+
+`copy` is the section's words — its declared text fields and the
 text keys of its list entries (steps, slides, FAQ), never links, images, alt text,
 ids, prices or the demo store's own facts (email, phone, address, hours, coupon
 code); the backend builds a section with no vendor facts behind it from them and
@@ -914,7 +974,7 @@ Testimonials and reviews are exempt: their copy never reaches a real store.
 `tokens` is the store's `config.tokens` — always the dials (sizes, weights,
 spacing, radius, motion); the colours and faces only when the theme's CSS reads
 the kit's colour/face vars (`--brand-*`, `--font-heading`/`--font-body`). A theme
-that hard-codes its palette (roast, glow, carat) varies templates by layout,
+that hard-codes its palette (roast, glow, carat) varies designs by layout,
 chrome, dials and section `style`.
 
 Rules for template authors:
@@ -923,18 +983,21 @@ Rules for template authors:
   template per business the theme serves (`food`, `hair`, `clothes`…), each with
   that business's own sections (a priced menu, table booking, a size guide, install
   steps). The vendor's business picks the template through `for`; the merchant or
-  qee picks the theme. **Never rename a shipped id**: vendors store the id they
-  picked (`foods` stays `foods`).
-- **Versions** (`theme/template-versions`): up to three designs for one business —
-  `food`, `food-2`, `food-3` — with exactly the same `for`; the backend spreads
-  matching vendors across them. Each has its own `label` saying what differs, its own
-  description and screenshot, and is a different design, not a recolour: its own
-  home order and section variants, plus its own header, footer and palette where the
-  theme allows. No two templates in a theme may list the same home sections in the
-  same order.
-- **Designed pages** (`theme/template-pages`): every template ships `about`, `sales`
-  and `landing` pages (versions `about-2`…`-5`, `sales-2`/`-3`, `landing-2`/`-3`
-  optional), each previewable at `/<slug>~<id>/<page>`. Qee clones the page for a
+  qee picks the theme. **Never rename a shipped id or key**: vendors store the design
+  id they picked (`foods` stays `foods`), and old links redirect by the key.
+- **Designs** (`theme/template-versions`): up to three designs of one template —
+  `{ id: 'food' }`, `{ id: 'food-2', template: 'food' }`, `{ id: 'food-3', template: 'food' }` —
+  with exactly the same `for`; the backend spreads matching vendors across them. The id
+  of a later design is any unused slug (`<key>-2` by habit): the grouping is the
+  explicit `template`, never the suffix. Each has its own `design_label` saying what
+  differs, its own description and screenshot, and is a different design, not a
+  recolour: its own home order and section variants, plus its own header, footer and
+  palette where the theme allows. No two designs in a theme may list the same home
+  sections in the same order.
+- **Designed pages** (`theme/template-pages`): every design ships `about`, `sales`
+  and `landing` pages (page versions `about-2`…`-5`, `sales-2`/`-3`, `landing-2`/`-3`
+  optional: the `-N` suffix still means something for page slugs), each previewable at
+  `/<slug>~<id>/<page>`. Qee clones the page for a
   vendor and fills it. On `sales` and `landing` every products section receives the
   products the merchant names — a single-product section (`featured`/`spotlight`) one
   each, in order, a list all of them — and the first hero is dressed with their
@@ -950,17 +1013,38 @@ Rules for template authors:
 - **Contact and FAQ** go where the design wants them; a template without them gets
   them appended at the end.
 
-**The preview links them.** On every store of a theme with more than one template,
-the preview adds a **Templates** dropdown to the end of the header menu, one link per
-template (`app/preview/_lib/templates-menu.ts`). It is added at render time, never
-written into the demo JSON — the backend copies that into real stores. It is a
-`group` item with `url` children, so every header variant a template uses must draw
-a menu item's children (a dropdown on desktop, indented under it in the mobile
-menu). `tests/theme-templates-menu.test.tsx` renders each template's own header
-and fails if any template link is missing. The extra item makes the menu longer: a
-header that sets the menu beside a centred logo must give it its own row when it does
-not fit on one line (medley split, roast centered and carat inline measure it with
-`useCrowdedNav`), never wrap it under itself or run it into the logo.
+**The preview.** For a theme with two or more templates (and a main key):
+
+- **The gallery.** `/<slug>` is the template gallery: one card per template (design
+  1's screenshot, the template label, design 1's description, how many designs), each
+  linking to `/<slug>~<key>`. It is core preview chrome
+  (`app/preview/_components/template-gallery.tsx`), never a theme component: no theme
+  CSS, header or footer. The preview host's root is the default theme's gallery. A
+  single-template theme keeps `/<slug>` as its store.
+- **The redirect.** The main store lives at `/<slug>~<main key>`, so an old link to
+  `/<slug>/<page>` (sent in chats, saved in the dashboard) is a **308** there, query
+  kept, answered by `proxy.ts` before anything renders
+  (`lib/storefront/utils/preview-routing.ts`). Not moved: `/<slug>` itself, any `~`
+  segment, single-template and unknown themes, a last segment with a dot.
+- **Templates and Designs dropdowns.** Every store of a gallery theme gets a
+  **Templates** item at the end of the header menu: "All templates" (the gallery),
+  then each template's design 1. A store whose template has two or more designs also
+  gets a **Designs** item listing that template's designs by `design_label`
+  (`app/preview/_lib/templates-menu.ts`). Both are added at render time, never written
+  into the demo JSON — the backend copies that into real stores. They are `group`
+  items with `url` children, so every header variant a design uses must draw a menu
+  item's children (a dropdown on desktop, indented under it in the mobile menu).
+  `tests/theme-templates-menu.test.tsx` renders each design's own header and fails if
+  any Templates or Designs link is missing. The two extra items make the menu longer:
+  a header that sets the menu beside a centred logo must give it its own row when it
+  does not fit on one line (medley split, roast centered and carat inline measure it
+  with `useCrowdedNav`), never wrap it under itself or run it into the logo.
+- **Embed.** When the merchant dashboard frames a preview, the frame shows exactly
+  the design the merchant is about to activate: no gallery link, no Templates and no
+  Designs dropdown. Embed is on with `?embed=1` on the URL (the dashboard sets it),
+  `Sec-Fetch-Dest: iframe` (the browser sends it on every framed page load, so
+  in-frame navigation stays embedded), or the `qk-capture` cookie (screenshots). The
+  gallery requested in embed is a **307** (never cached) to the main design.
 
 ### Placeholder content
 
@@ -981,13 +1065,15 @@ the first item on the to-do list, not a fault in the scaffold.
 
 ## theme.png
 
-1280x800 screenshot of the homepage (`theme.jpg` or `theme.png`) — the primary
-template's screenshot; see [Templates](#templates). With `yarn dev` running,
-`yarn theme:capture <slug> [template ids…]` captures every template's first screen
-from `preview.localhost:3001` into `theme.jpg` / `demos/<id>.jpg`, with the
-`qk-capture` cookie set — it leaves the preview's Templates dropdown out, so the
-screenshot shows the store as a merchant gets it. Then
-`yarn theme:rehost-images --theme <slug>` uploads them.
+1280x800 screenshot of the homepage (`theme.jpg` or `theme.png`) — the main
+design's screenshot; see [Templates](#templates). With `yarn dev` running,
+`yarn theme:capture <slug> [design ids…]` first refreshes `themes/design-index.json`
+(what the preview routes read; commit its diff), then captures every design's first
+screen at its own design URL on `preview.localhost:3001` into `theme.jpg` /
+`demos/<id>.jpg`: the main design at `/<slug>~<main key>`, never `/<slug>`, which is
+the gallery on a theme with 2+ templates. The `qk-capture` cookie leaves the
+preview's Templates and Designs dropdowns out, so the screenshot shows the store as
+a merchant gets it. Then `yarn theme:rehost-images --theme <slug>` uploads them.
 
 ## Registration
 
@@ -995,7 +1081,7 @@ screenshot shows the store as a merchant gets it. Then
 2. Register it in `themes/loaders.ts` — one line in **each** map: `themeLoaders` (the module) and `themeStyles` (its CSS in the server-rendered HTML; without it the store paints unstyled until JS runs)
 3. Run `yarn theme:generate-registry`
 4. Sync to Laravel: `php artisan storefront:sync-themes`
-5. Verify: `preview.localhost:3001/<slug>` renders correctly
+5. Verify: `preview.localhost:3001/<slug>` renders correctly (the template gallery for 2+ templates; each design at `/<slug>~<id>`)
 
 ## Validation
 

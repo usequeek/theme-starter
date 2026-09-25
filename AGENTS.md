@@ -28,12 +28,13 @@ against is `docs/THEME.md`; read it before changing anything.
 - A raw `<img>` (use `<Image />` from the kit), or `next/font/google` (ship font files).
 - Any `next/*` import; `Link`, `useRouter` and `usePathname` come from `@usequeek/theme-kit/navigation`.
 
-## Templates
+## Templates and designs
 
-Each demo store is a template for one business: `theme/demo.json` (the primary) and
-`theme/demos/<id>.json`, declared in `theme/theme.config.ts` with `for` keys from
+A template is one business (food, hair); each demo store is a design of a template:
+`theme/demo.json` (the main one) and `theme/demos/<id>.json`, declared in
+`theme/theme.config.ts` with its `template` key and `for` keys from
 `docs/business-vocabulary.json`. A whole business leads with its category (`fashion`);
-a niche names only its product keys. No two templates may share a home page. Each needs
+a niche names only its product keys. No two designs may share a home page. Each needs
 about, sales and landing pages and a description of at most 300 characters.
 
 ## Style

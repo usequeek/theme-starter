@@ -76,7 +76,7 @@ use the same hooks they will use in production; only the source of the data chan
      (`theme/template-description`);
    - capture each template's screenshot, the primary's as `theme/theme.jpg`
      (`theme/template-screenshot`, and `theme/structure` until `theme.jpg` exists);
-   - with two or more templates, give each its own home page (`theme/template-versions`).
+   - with two or more templates or designs, give each its own home page (`theme/template-versions`).
 3. **Design it.** Write the layout, header, footer, blocks and pages. Style from the design
    tokens (`var(--fs-*)`, `var(--space-*)`, `var(--radius-*)`…): a hard-coded size is a setting
    that does nothing in the merchant's editor. Import your own files with relative paths.
@@ -98,25 +98,28 @@ use the same hooks they will use in production; only the source of the data chan
   nothing when it is empty.
 - Use `<Image />` from the kit, never a raw `<img>`.
 
-## Templates
+## Templates and designs
 
-A Queek merchant picks a **template**, which is one of your demo stores, and Queek builds their
-store from it. It copies the template's page layouts, header, footer, design settings and each
-section's style, then fills them with the merchant's own products, photos and copy. What
-`/<store>` shows is what the merchant gets.
+Your theme is the look. A **template** is a business it is dressed as (food, hair,
+clothes), and a **design** is one concrete demo store of a template. A Queek merchant picks a
+design, and Queek builds their store from it. It copies the design's page layouts, header,
+footer, design settings and each section's style, then fills them with the merchant's own
+products, photos and copy. What `/<store>` shows is what the merchant gets.
 
 - **One template per business** your theme serves, for example `food`, `hair` and `clothes`,
-  each with that business's own sections: a priced menu, table booking, a size guide. You can
-  add up to three versions of one business (`food`, `food-2`) with the same `for` and a
-  different design.
-- **Declare each one** in `theme/theme.config.ts`. The primary goes in `default_demo`, the
-  others in `demos`:
+  each with that business's own sections: a priced menu, table booking, a size guide. A
+  template can have up to three designs (`food`, then `food-2` with `template: 'food'`),
+  with the same `for`, a `design_label` each and a different design.
+- **Declare each design** in `theme/theme.config.ts`, with the `template` it belongs to. The
+  main one goes in `default_demo`, the others in `demos`:
   ```ts
-  default_demo: { label: 'Skincare & make-up', for: ['beauty-cosmetics', 'makeup', 'skincare'], description: '…' },
+  default_demo: { template: 'beauty', label: 'Skincare & make-up', for: ['beauty-cosmetics', 'makeup', 'skincare'], description: '…' },
   demos: [
-    { id: 'food', label: 'Restaurant & kitchen', for: ['foods', 'local-meals'], description: '…' },
+    { id: 'food', template: 'food', label: 'Restaurant & kitchen', for: ['foods', 'local-meals'], description: '…' },
   ],
   ```
+  `template` is the business's key, a slug that never changes once published. A template's
+  first design has the key as its id (`food`); `label` names the business.
   `for` uses only keys from `docs/business-vocabulary.json`. A template
   for a whole business (clothes, food) leads with its business category (`fashion`, `foods`); a
   template for one kind of product (hair, shoes, jewellery) names only its product keys
@@ -127,7 +130,7 @@ section's style, then fills them with the merchant's own products, photos and co
 - **Each template ships an `about`, a `sales` and a `landing` page.** A sales page sells one to
   three products: a hero of the product's photos, a `spotlight`/`featured` product section in
   the first three sections, and a contact section at the end. A landing page is a campaign.
-- **No two templates may share a home page.** Use a different section order and different
+- **No two designs may share a home page.** Use a different section order and different
   variants.
 - **Write copy as a template, not as one shop.** "Wash, deep condition and braid" works for
   any hair store. Queek publishes a template's copy onto new stores as it is, so never name
@@ -136,8 +139,8 @@ section's style, then fills them with the merchant's own products, photos and co
   enforces this.
 - **Photos:** reference any public URL. Queek moves them to its CDN when your theme is
   published. Never use a real brand's photography.
-- **Screenshots:** a 1280×800 capture of each template's first screen, `theme/theme.jpg` for
-  the primary and `theme/demos/<id>.jpg` for the others.
+- **Screenshots:** a 1280×800 capture of each design's first screen, `theme/theme.jpg` for
+  the main one and `theme/demos/<id>.jpg` for the others.
 
 Every rule is in `docs/THEME.md` → Templates.
 
