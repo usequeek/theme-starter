@@ -4,8 +4,8 @@ const config = {
   author: 'Queek',
   description: 'The starting skeleton for a new theme — the contract with no design opinions. Never published.',
   version: '1.0.0',
-  tags: ['starter'],
-  categories: [],
+  tags: ['minimal'],
+  categories: ['shop'],
   rank: 0,
   // Every demo store is a template (themes/THEME.md#templates). demo.json is
   // the primary: name its business (its business category first), in the vocabulary of

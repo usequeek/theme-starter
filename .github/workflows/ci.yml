@@ -19,8 +19,9 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
-      # The starter itself ships a placeholder template description on purpose,
-      # so an unedited copy cannot be submitted. Write yours in
-      # theme/theme.config.ts and this step checks everything.
+      # The starter itself ships placeholders on purpose, so an unedited copy
+      # cannot be submitted: the template descriptions, the products and photos
+      # in its demo stores, and (once create has run) the theme description.
+      # `npm run check` lists them; replace them and this step checks everything.
       - if: github.repository != 'usequeek/theme-starter'
         run: npx queek-theme check --format github-actions

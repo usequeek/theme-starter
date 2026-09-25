@@ -110,6 +110,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Read vendor/config data via `useStorefront()`, `useProducts()`, `useCategories()`
 - Trigger modals via store openers: `useAuthModalStore().open()`, `useCartPanelStore().open()`
 - Use `<Image />` from `@usequeek/theme-kit/components/image` for all images — provides broken-image fallback + Smart Placeholder support (see below)
+  - Give product/collection card images `intent="card"`: they are **lazy by default** (a server-rendered grid would otherwise preload and fetch every card image at once, racing the page's CSS). A card that is the page's main image passes `fetchPriority="high"`.
 - Style framework-owned blocks (divider, embed, video, table, button, image, content/default) via `.theme-<slug> .core-block-*` scoped selectors
 
 ## What themes MUST NOT do
@@ -125,7 +126,8 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Generate variant thumbnails — Queek's build pipeline handles this centrally (see Variant Thumbnails below)
 - Reference an external image host or a local file from `demo.json` — run `yarn theme:rehost-images` and commit the rewritten file (see Demo Art Hosting below)
 - Load fonts with `next/font/google` or a `fonts.googleapis.com` `@import` — ship the files in `themes/<slug>/fonts/` (see Fonts below)
-- Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. `tests/vendor-shell-ssr.test.tsx` server-renders every theme's chrome
+- Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. A throw while server rendering your Layout, header or any page is a **failed request (500)**, not a quiet fallback to the browser — the page is deliberately not wrapped in a Suspense boundary, so a missing product or page can answer a real 404. `tests/theme-pages-ssr.test.tsx` server-renders every page of every demo store (which is why demo data must use the real API shapes — a variant is `option_values` / `pricing` / `inventory`, not a `{ Colour: 'Red' }` map)
+- Link a demo store to a page it does not have — missing pages are real 404s. `tests/demo-links.test.ts` checks every menu item, block link and markdown link in `demo.json` and `demos/*.json`
 
 ---
 
@@ -247,25 +249,35 @@ interface ShopPageProps {
 
 ### Products hook (`useShop`)
 
-Import from `@usequeek/theme-kit/hooks/use-shop`. Products are loaded client-side so filters feel instant.
+Import from `@usequeek/theme-kit/hooks/use-shop`, and read the filters from the URL with
+`useShopParams` so they survive refresh and are shareable.
 
 ```ts
 import { useShop } from '@usequeek/theme-kit/hooks/use-shop';
+import { useShopParams } from '@usequeek/theme-kit/hooks/use-shop-params';
 
-const { products, isLoading, meta, loadMore } = useShop({
-  categoryId: activeCategoryId, // string | null  — filters to that category tree
-  keyword: searchQuery,          // string | null  — keyword search
-  sort: 'latest',               // 'latest' | 'popular' | 'price_low' | 'price_high'
-  perPage: 24,                  // default 24, max 60
+const { categorySlug, keyword, sort, page, setCategory, setKeyword, setSort, setPage } = useShopParams();
+const { products, isLoading, pagination } = useShop({
+  categorySlug,   // string | null — ?category=
+  keyword,        // string — ?q=
+  sort,           // 'latest' | 'popular' | 'price_low' | 'price_high' — ?sort=
+  page,           // ?page=
+  perPage: 24,    // keep 24 (see below)
 });
-
-// meta: { currentPage, perPage, hasMore }
-// Call loadMore() to append the next page
+// pagination: { currentPage, lastPage, perPage, total, from, to, hasMore }
 ```
+
+**The first page is server-rendered.** On a live store, `/shop` fetches the page your
+`useShop` call will ask for — this URL's filters, read exactly as `useShopParams` reads them,
+at `perPage: 24` — and hands it to `useShop`, so the product grid is in the HTML instead of
+appearing after the JS has run and fetched it (kili-foods `/shop`: products visible 1.7 s →
+0.5 s, measured 24/9/26). Only an exact match is used: a call with other filters or another
+page size just fetches in the browser, as it always has. Filtering and paging after load fetch
+in the browser too. Preview (demo stores) filters the demo catalogue in memory.
 
 ### Backend endpoint (for reference — do NOT call directly)
 
-`GET /api/v1/client/store/products?per_page=24&page=1&category_id=UUID&keyword=&sort=latest`
+`GET /api/v1/client/store/products?per_page=24&page=1&category_slug=soups&keyword=&sort=latest`
 
 Returns paginated product objects with the same shape as collection products. The `meta` block contains `current_page`, `per_page`, `from`, `to` (use `to - from + 1 >= per_page` as `hasMore`).
 
@@ -494,9 +506,14 @@ fetched from Google, at build time or on page load. `yarn theme:check` enforces 
   Turbopack cannot parse — the build fails with *"next/font/google queries have exactly
   one entry"* ([vercel/next.js#99114](https://github.com/vercel/next.js/issues/99114)).
   It failed a production deploy on 23/9/26.
-- **A Google Fonts `@import` in your CSS is flagged.** The bundler silently drops it
-  unless it ends up the very first rule of the compiled stylesheet; when it survives,
-  every page waits on an extra render-blocking request to Google.
+- **A Google Fonts `@import` in your CSS is rejected.** The bundler silently drops it
+  unless it ends up the very first rule of the compiled stylesheet — atelier, deluxr
+  and lumiere shipped that way, and a store without a matching brand font never got
+  their fonts at all — and when it survives, every page waits on a render-blocking
+  request to Google (another origin: DNS + TLS) before any text can paint. A theme
+  that had one can vendor exactly what Google served: fetch the CSS2 URL with a
+  Chrome user agent, download each `woff2` it names, and keep the rules as they are
+  (see `themes/lumiere/fonts/`).
 
 How to add one (see `themes/carat/fonts/` for a complete example):
 
@@ -924,6 +941,23 @@ and fails if any template link is missing. The extra item makes the menu longer:
 header that sets the menu beside a centred logo must give it its own row when it does
 not fit on one line (medley split, roast centered and carat inline measure it with
 `useCrowdedNav`), never wrap it under itself or run it into the logo.
+
+### Placeholder content
+
+`theme/placeholder-content` rejects the stand-ins a new theme starts with, so none is
+ever submitted:
+
+- the skeleton's products: any demo product whose `slug` starts with `placeholder-`;
+- the skeleton's six photos, `media.usequeek.com/theme-assets/_bare/…` (rehosted
+  copies, so a theme using the originals is not caught);
+- a theme `description` in `theme.config.ts` that starts "Replace before publishing"
+  (what `npm create @usequeek/theme` writes; each template's own placeholder
+  description is `theme/template-description`'s).
+
+Every theme's preview must look like itself; shared stand-ins would make every store
+look the same. So a theme scaffolded from the skeleton — by `yarn theme:new` or
+`npm create @usequeek/theme` — fails this rule until its author replaces them: it is
+the first item on the to-do list, not a fault in the scaffold.
 
 ## theme.png
 

@@ -12,7 +12,10 @@ cd my-theme
 npm run dev          # http://localhost:3000
 ```
 
-Or clone it yourself: `git clone https://github.com/usequeek/theme-starter.git my-theme && cd my-theme && npm install`.
+`create` asks for the theme's name, the businesses its templates are for, its tags and
+the AI assistants you use (each is also a flag: `npm create @usequeek/theme -- --help`),
+then names everything for you. A plain `git clone` of this repository leaves the
+skeleton's own name everywhere, so start with `create`.
 
 A theme is React and CSS. You never configure Next.js; the preview runs it for you.
 
@@ -36,6 +39,9 @@ annotates pull requests with any findings.
 | `theme/` | **Your theme.** A skeleton that already meets the contract: layout, header, footer, blocks, pages, shells, `manifest.ts`, `theme.css`, and `demo.json`, its demo store. Replace the design; keep the contract. |
 | `docs/THEME.md` | **The contract.** It is what Queek checks every submitted theme against. |
 | `docs/business-vocabulary.json` | The business keys a template's `for` may use. |
+| `AGENTS.md` | Instructions for AI coding assistants: what a Queek theme is, the commands, and what fails a submission. Codex, Cursor and Copilot read it as it is. |
+| `CLAUDE.md`, `GEMINI.md` | Point Claude Code and Gemini CLI at `AGENTS.md`. `create` keeps the ones you pick (`--ai`), or no AI files at all (`--no-ai`). |
+| `.claude/skills/queek-theme/` | A Claude Code skill: the contract on demand (component rules, hooks, templates and their copy, photos). |
 
 The theme is built on [`@usequeek/theme-kit`](https://www.npmjs.com/package/@usequeek/theme-kit).
 It provides the data hooks (`useProducts`, `useShop`, `useCart`…), the flows Queek owns
@@ -60,18 +66,25 @@ use the same hooks they will use in production; only the source of the data chan
 
 ## Building your theme
 
-1. **Name it.** In `theme/theme.config.ts` set `name` and `slug`, and rename the skeleton's
-   identity everywhere it appears: `.theme-bare` in `layout.tsx`, the `bare-` CSS prefix,
-   `profile.slug`/`config.theme`/`profile.id` in `demo.json`, and every `products[].shop_id`
-   (it must equal `profile.id`). `npm run check` names any you miss.
-2. **Design it.** Write the layout, header, footer, blocks and pages. Style from the design
+1. **Name it.** `npm create @usequeek/theme` names it for you: the slug, the CSS prefix and
+   every demo store's identity, with one demo store per template you picked.
+2. **Work through the to-do list** `npm run check` prints right after `create`:
+   - replace the placeholder products and photos with your own for each template's
+     business, and the theme's own description in `theme/theme.config.ts`
+     (`theme/placeholder-content`);
+   - write each template's description in `theme/theme.config.ts`
+     (`theme/template-description`);
+   - capture each template's screenshot, the primary's as `theme/theme.jpg`
+     (`theme/template-screenshot`, and `theme/structure` until `theme.jpg` exists);
+   - with two or more templates, give each its own home page (`theme/template-versions`).
+3. **Design it.** Write the layout, header, footer, blocks and pages. Style from the design
    tokens (`var(--fs-*)`, `var(--space-*)`, `var(--radius-*)`…): a hard-coded size is a setting
    that does nothing in the merchant's editor. Import your own files with relative paths.
-3. **Declare your variants** in `theme/manifest.ts`. Each variant needs a component in
+4. **Declare your variants** in `theme/manifest.ts`. Each variant needs a component in
    `theme/index.ts`, and exactly the fields that component reads.
-4. **Make templates** (below), each with its own demo store.
-5. **Check it:** `npm run check` until there are no errors.
-6. **Submit it** (below).
+5. **Make templates** (below), each with its own demo store.
+6. **Check it:** `npm run check` until there are no errors.
+7. **Submit it** (below).
 
 ### Rules that get a theme rejected
 
