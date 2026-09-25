@@ -13,6 +13,7 @@ Read `AGENTS.md` first, then `docs/THEME.md` (the contract). Work loop:
 
 Data comes only from the kit: `useStorefront()` (vendor, config, menus), `useProducts`,
 `useShop`, `useCategories`, `useCart`. Links: `menuItemToHref()`; images: `<Image />`.
+Never import `next/*`; `Link`, `useRouter` and `usePathname` come from `@usequeek/theme-kit/navigation`.
 
 Photos: licensed and unique to this theme (your own, or a free licence such as Unsplash).
 Never another store's or a brand's photography, and never the starter's placeholders.

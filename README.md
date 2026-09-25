@@ -17,7 +17,7 @@ the AI assistants you use (each is also a flag: `npm create @usequeek/theme -- -
 then names everything for you. A plain `git clone` of this repository leaves the
 skeleton's own name everywhere, so start with `create`.
 
-A theme is React and CSS. You never configure Next.js; the preview runs it for you.
+A theme is React and CSS. You never configure Next.js; the preview runs it for you. You never import it either: links and navigation come from `@usequeek/theme-kit/navigation`.
 
 ## Commands
 
@@ -89,8 +89,9 @@ use the same hooks they will use in production; only the source of the data chan
 ### Rules that get a theme rejected
 
 - Never call an API or the SDK. Use the kit's hooks.
-- Never import from outside `@usequeek/theme-kit`, except React and Next. If the kit lacks
-  something you need, ask for it.
+- Never import from outside `@usequeek/theme-kit`, except React. That includes Next.js:
+  `Link`, `useRouter` and `usePathname` come from `@usequeek/theme-kit/navigation`. If the kit
+  lacks something you need, ask for it.
 - Never render data the store should supply. A section with hard-coded products looks right
   here and is empty on a real store.
 - Never print copy a merchant cannot change. Take it from the section's data, and render

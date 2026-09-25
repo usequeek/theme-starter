@@ -26,6 +26,7 @@ against is `docs/THEME.md`; read it before changing anything.
 - The starter's placeholder products and photos (`theme/placeholder-content`). Every
   template needs its own products and licensed photos — never another store's or a brand's.
 - A raw `<img>` (use `<Image />` from the kit), or `next/font/google` (ship font files).
+- Any `next/*` import; `Link`, `useRouter` and `usePathname` come from `@usequeek/theme-kit/navigation`.
 
 ## Templates
 

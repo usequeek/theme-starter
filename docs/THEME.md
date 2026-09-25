@@ -126,6 +126,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Generate variant thumbnails — Queek's build pipeline handles this centrally (see Variant Thumbnails below)
 - Reference an external image host or a local file from `demo.json` — run `yarn theme:rehost-images` and commit the rewritten file (see Demo Art Hosting below)
 - Load fonts with `next/font/google` or a `fonts.googleapis.com` `@import` — ship the files in `themes/<slug>/fonts/` (see Fonts below)
+- Import Next.js (`next`, `next/link`, `next/navigation`, `next/image`, `next/font/*` …). Link and navigate with `import { Link, useRouter, usePathname } from '@usequeek/theme-kit/navigation';`, and use the kit's `<Image />` for images. Queek decides which framework runs the storefront, so only the kit may know it — `theme/core-boundary` rejects any `next` import
 - Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. A throw while server rendering your Layout, header or any page is a **failed request (500)**, not a quiet fallback to the browser — the page is deliberately not wrapped in a Suspense boundary, so a missing product or page can answer a real 404. `tests/theme-pages-ssr.test.tsx` server-renders every page of every demo store (which is why demo data must use the real API shapes — a variant is `option_values` / `pricing` / `inventory`, not a `{ Colour: 'Red' }` map)
 - Link a demo store to a page it does not have — missing pages are real 404s. `tests/demo-links.test.ts` checks every menu item, block link and markdown link in `demo.json` and `demos/*.json`
 
@@ -528,10 +529,7 @@ How to add one (see `themes/carat/fonts/` for a complete example):
    `.theme-<slug> { --my-font: "Jost", "Jost Fallback"; }`.
 4. `import './fonts/fonts.css';` at the top of `layout.tsx`, before `theme.css`.
 
-Or use `next/font/local` pointed at the file — it reads from the repo, never the
-network, and computes the fallback metrics for you (one subset per call). Never
-`preload` a theme font: every theme's layout is in every store's bundle, so a preload
-downloads it on every store, whatever its theme.
+Never `preload` a theme font: every theme's layout is in every store's bundle, so a preload downloads it on every store, whatever its theme.
 
 ## Smart Placeholders
 
