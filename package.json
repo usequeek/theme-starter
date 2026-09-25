@@ -20,7 +20,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@usequeek/theme-cli": "^0.1.0 || ^0.2.0",
+    "@usequeek/theme-cli": "^0.3.0",
     "typescript": "^5"
   },
   "license": "SEE LICENSE IN LICENSE.md",
