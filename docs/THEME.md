@@ -24,12 +24,34 @@ Shopify's skeleton-theme) and installs the tools, `@usequeek/theme-cli`
 ([github.com/usequeek/theme-tools](https://github.com/usequeek/theme-tools)):
 
 ```bash
-npm create @usequeek/theme my-theme
+npm create @usequeek/theme@latest my-theme -- --templates laundry --tags minimal
 cd my-theme
 npm run dev       # queek-theme dev: every page of every demo store, real Next.js
 npm run check     # queek-theme check: this document's rules, on your machine
 npm run package   # queek-theme package: a zip for submission
 ```
+
+It walks you through name, templates, primary, categories, tags, pages and AI
+assistants — every answer is also a flag, so the whole thing can be scripted
+(`npm` needs `--` before them; a terminal just asks):
+
+```
+--name <text>          theme name (default: the folder name)
+--templates <keys>     businesses to make templates for, comma-separated (required with --yes)
+--primary <key>        the primary template (default: the first)
+--categories <keys>    business categories (default: the templates')
+--tags <tags>          1–6 tags for the look (required with --yes)
+--pages <list|none>    extra pages: contact, faq (default: both)
+--ai <list>, --no-ai   AI assistants: claude, gemini (default: both; AGENTS.md unless --no-ai)
+--pm <npm|pnpm|yarn|bun>, --no-install, --no-git
+--yes, -y              never prompt; take the default for everything else
+--dry-run              print what would be written; write nothing
+--force                allow a folder that is not empty
+--template <source>    another starter: a giget source or a local folder
+```
+
+`--help` prints the current list from the installed `@usequeek/create-theme`;
+trust that over this copy if the two ever drift.
 
 Everything below still applies: the starter ships the same `_bare` skeleton
 `yarn theme:new` scaffolds (as `theme/`), this document (as `docs/THEME.md`) and the
