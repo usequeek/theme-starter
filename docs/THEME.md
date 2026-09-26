@@ -810,9 +810,9 @@ themes/roast/
 
 ```ts
 // theme.config.ts
-default_demo: { template: 'coffee', label: 'Coffee & café', design_label: 'Roastery', for: ['beverages'], description: '…' },
+default_demo: { template: 'coffee', label: 'Coffee & café', design_label: 'Roastery', for: ['groceries'], description: '…' },
 demos: [
-  { id: 'foods', template: 'foods', label: 'Restaurant & takeaway', design_label: "Today's pot", for: ['foods', 'local-meals'], description: '…' },
+  { id: 'foods', template: 'foods', label: 'Restaurant & takeaway', design_label: "Today's pot", for: ['foods'], description: '…' },
   // A second design of the same template: same business, a different design.
   // It declares only id, template, design_label and description — it inherits
   // the template's label and for.
@@ -913,8 +913,8 @@ What each design must carry (theme-check rejects a gap):
   categories only as the fallback and the niche signal. A **general** template (a
   business as a whole: clothes, food, beauty) **leads with** its business category
   (`fashion`, `foods`, `beauty-cosmetics`) and may add catalogue keys after it. A **niche** template (one
-  kind of product inside a business: hair, shoes, jewellery, coffee) names **only**
-  its catalogue keys (`["jewelry", "bags-accessories"]`, `["beverages"]`): naming the
+  kind of product inside a business: hair, shoes, jewellery) names **only**
+  its catalogue keys (`["jewelry", "bags-accessories"]`, `["shoes"]`): naming the
   business would make it compete as a general template, and a makeup seller with no
   categorised products could be handed the wig store.
 - **A `template` key and a `label`** naming the business the template is dressed as —

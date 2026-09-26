@@ -115,7 +115,7 @@ products, photos and copy. What `/<store>` shows is what the merchant gets.
   ```ts
   default_demo: { template: 'beauty', label: 'Skincare & make-up', for: ['beauty-cosmetics', 'makeup', 'skincare'], description: '…' },
   demos: [
-    { id: 'food', template: 'food', label: 'Restaurant & kitchen', for: ['foods', 'local-meals'], description: '…' },
+    { id: 'food', template: 'food', label: 'Restaurant & kitchen', for: ['foods'], description: '…' },
   ],
   ```
   `template` is the business's key, a slug that never changes once published. A template's
