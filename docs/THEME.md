@@ -814,7 +814,9 @@ default_demo: { template: 'coffee', label: 'Coffee & café', design_label: 'Roas
 demos: [
   { id: 'foods', template: 'foods', label: 'Restaurant & takeaway', design_label: "Today's pot", for: ['foods', 'local-meals'], description: '…' },
   // A second design of the same template: same business, a different design.
-  { id: 'foods-2', template: 'foods', label: 'Restaurant & takeaway', design_label: 'Grill house', for: ['foods', 'local-meals'], description: '…' },
+  // It declares only id, template, design_label and description — it inherits
+  // the template's label and for.
+  { id: 'foods-2', template: 'foods', design_label: 'Grill house', description: '…' },
 ],
 ```
 
@@ -835,8 +837,8 @@ demos: [
 
 **Design 1** of a template is the design whose id is its key (`foods`; `default` for
 the main template). The others follow in `demos[]` order. `label` and `for` are the
-template's, declared on design 1; a later design repeats them for now, because the
-published checker still requires both on every `demos[]` entry.
+template's, declared once on design 1; a later design declares only `id`, `template`,
+`design_label` and `description` — it inherits `label` and `for` from design 1.
 
 Every design previews at its own URL, and every link inside it stays on that design:
 
@@ -934,10 +936,10 @@ What each design must carry (theme-check rejects a gap):
 
 The R2.8 checks (explicit `template` on every design, one `for` per template,
 `design_label` for 2+ designs, at most three designs per template, keys and ids in one
-namespace) arrive as a new rule, `theme/template-designs`, with the next
-`@usequeek/theme-check` release; until then `theme/template-versions` still reads
-the `-2` suffix. Write the fields now: the resolver (`lib/storefront/utils/theme-designs.ts`)
-and the registry already group by them.
+namespace) are `theme/template-designs` (`@usequeek/theme-check` 0.4.0). `theme/template-versions`
+keeps its id but only checks a design's home composition now; grouping designs by an
+id's `-2` suffix is gone — a design is grouped by the explicit `template` it declares,
+exactly as the resolver (`lib/storefront/utils/theme-designs.ts`) and the registry group it.
 
 What the registry publishes per design (`demos[]` in `/api/theme-registry`):
 `id, template, template_label, design_index, design_label, label, for, description,
@@ -985,7 +987,7 @@ Rules for template authors:
   steps). The vendor's business picks the template through `for`; the merchant or
   qee picks the theme. **Never rename a shipped id or key**: vendors store the design
   id they picked (`foods` stays `foods`), and old links redirect by the key.
-- **Designs** (`theme/template-versions`): up to three designs of one template —
+- **Designs** (`theme/template-designs`): up to three designs of one template —
   `{ id: 'food' }`, `{ id: 'food-2', template: 'food' }`, `{ id: 'food-3', template: 'food' }` —
   with exactly the same `for`; the backend spreads matching vendors across them. The id
   of a later design is any unused slug (`<key>-2` by habit): the grouping is the
@@ -993,7 +995,7 @@ Rules for template authors:
   differs, its own description and screenshot, and is a different design, not a
   recolour: its own home order and section variants, plus its own header, footer and
   palette where the theme allows. No two designs in a theme may list the same home
-  sections in the same order.
+  sections in the same order (`theme/template-versions`).
 - **Designed pages** (`theme/template-pages`): every design ships `about`, `sales`
   and `landing` pages (page versions `about-2`…`-5`, `sales-2`/`-3`, `landing-2`/`-3`
   optional: the `-N` suffix still means something for page slugs), each previewable at
@@ -1103,7 +1105,8 @@ Each finding names the rule, where it is, what is wrong, and what to do:
 ```
 
 **These are the same rules CI runs** (`tests/theme-check.test.ts` asserts over the
-identical library in `scripts/theme-check/`). There is no second definition of
+published `@usequeek/theme-check` library, plus three storefront-only rules in
+`scripts/theme-check/`). There is no second definition of
 "valid" to pass locally and fail on submission.
 
 **A theme publishes only when every blocking finding is clear** — no partial
