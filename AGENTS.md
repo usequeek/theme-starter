@@ -6,9 +6,12 @@ against is `docs/THEME.md`; read it before changing anything.
 
 ## Commands
 
-- `npm run dev` — preview every page of every demo store at http://localhost:3000
+- `npm run dev` — preview every page of every demo store at http://localhost:7833 (or the
+  next free port; it prints the URL)
 - `npm run check` — the rules Queek runs on submission. It is the judge: work until it
   reports no errors. It also lists the checks only Queek can run.
+- `npm run screenshot` — capture every design's first screen at 1280×800 into
+  `theme/theme.jpg` and `theme/demos/<id>.jpg`, the files the check reads
 - `npm run typecheck`
 - `npm run package` — the zip to submit
 

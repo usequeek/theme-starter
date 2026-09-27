@@ -9,7 +9,7 @@ repository holds only your theme and updating the tools never touches it.
 ```bash
 npm create @usequeek/theme my-theme
 cd my-theme
-npm run dev          # http://localhost:3000
+npm run dev          # http://localhost:7833 (or the next free port)
 ```
 
 `create` asks for the theme's name, the businesses its templates are for, its tags and
@@ -74,8 +74,9 @@ use the same hooks they will use in production; only the source of the data chan
      (`theme/placeholder-content`);
    - write each template's description in `theme/theme.config.ts`
      (`theme/template-description`);
-   - capture each template's screenshot, the primary's as `theme/theme.jpg`
-     (`theme/template-screenshot`, and `theme/structure` until `theme.jpg` exists);
+   - run `npm run screenshot`: it captures every design's first screen at 1280×800, the
+     primary's as `theme/theme.jpg` (`theme/template-screenshot`, and `theme/structure`
+     until `theme.jpg` exists). It needs Chrome, Edge or `npx playwright install chromium`;
    - with two or more templates or designs, give each its own home page (`theme/template-versions`).
 3. **Design it.** Write the layout, header, footer, blocks and pages. Style from the design
    tokens (`var(--fs-*)`, `var(--space-*)`, `var(--radius-*)`…): a hard-coded size is a setting
@@ -140,7 +141,8 @@ products, photos and copy. What `/<store>` shows is what the merchant gets.
 - **Photos:** reference any public URL. Queek moves them to its CDN when your theme is
   published. Never use a real brand's photography.
 - **Screenshots:** a 1280×800 capture of each design's first screen, `theme/theme.jpg` for
-  the main one and `theme/demos/<id>.jpg` for the others.
+  the main one and `theme/demos/<id>.jpg` for the others. `npm run screenshot` makes them;
+  run it again after a design changes.
 
 Every rule is in `docs/THEME.md` → Templates.
 

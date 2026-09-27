@@ -28,6 +28,7 @@ npm create @usequeek/theme@latest my-theme -- --templates laundry --tags minimal
 cd my-theme
 npm run dev       # queek-theme dev: every page of every demo store, real Next.js
 npm run check     # queek-theme check: this document's rules, on your machine
+npm run screenshot # queek-theme screenshot: every design's first screen, 1280×800
 npm run package   # queek-theme package: a zip for submission
 ```
 
@@ -152,6 +153,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Load fonts with `next/font/google` or a `fonts.googleapis.com` `@import` — ship the files in `themes/<slug>/fonts/` (see Fonts below)
 - Import Next.js (`next`, `next/link`, `next/navigation`, `next/image`, `next/font/*` …). Link and navigate with `import { Link, useRouter, usePathname } from '@usequeek/theme-kit/navigation';`, and use the kit's `<Image />` for images. Queek decides which framework runs the storefront, so only the kit may know it — `theme/core-boundary` rejects any `next` import
 - Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. A throw while server rendering your Layout, header or any page is a **failed request (500)**, not a quiet fallback to the browser — the page is deliberately not wrapped in a Suspense boundary, so a missing product or page can answer a real 404. `tests/theme-pages-ssr.test.tsx` server-renders every page of every demo store (which is why demo data must use the real API shapes — a variant is `option_values` / `pricing` / `inventory`, not a `{ Colour: 'Red' }` map)
+- Pass `renderMarkdown(…)` to `dangerouslySetInnerHTML` — it returns React elements, not an HTML string, so the page shows "[object Object]". Render the elements as children (`<div className="…">{renderMarkdown(text, basePath)}</div>`) or use `<Markdown>` from `@usequeek/theme-kit/components/markdown`; `theme/markdown-html` rejects it
 - Link a demo store to a page it does not have — missing pages are real 404s. `tests/demo-links.test.ts` checks every menu item, block link and markdown link in `demo.json` and `demos/*.json`
 
 ---
@@ -1083,7 +1085,8 @@ the first item on the to-do list, not a fault in the scaffold.
 ## theme.png
 
 1280x800 screenshot of the homepage (`theme.jpg` or `theme.png`) — the main
-design's screenshot; see [Templates](#templates). With `yarn dev` running,
+design's screenshot; see [Templates](#templates). Outside this repo, `npm run screenshot`
+(`queek-theme screenshot`) captures every design into these files. In this repo, with `yarn dev` running,
 `yarn theme:capture <slug> [design ids…]` first refreshes `themes/design-index.json`
 (what the preview routes read; commit its diff), then captures every design's first
 screen at its own design URL on `preview.localhost:3001` into `theme.jpg` /

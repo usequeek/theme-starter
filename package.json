@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "queek-theme dev",
     "check": "queek-theme check",
+    "screenshot": "queek-theme screenshot",
     "package": "queek-theme package",
     "typecheck": "tsc --noEmit"
   },
@@ -20,7 +21,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@usequeek/theme-cli": "^0.3.0 || ^0.4.0 || ^0.5.0",
+    "@usequeek/theme-cli": "^0.6.0",
     "typescript": "^5"
   },
   "license": "SEE LICENSE IN LICENSE.md",
