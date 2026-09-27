@@ -133,6 +133,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Trigger modals via store openers: `useAuthModalStore().open()`, `useCartPanelStore().open()`
 - Use `<Image />` from `@usequeek/theme-kit/components/image` for all images — provides broken-image fallback + Smart Placeholder support (see below)
   - Give product/collection card images `intent="card"`: they are **lazy by default** (a server-rendered grid would otherwise preload and fetch every card image at once, racing the page's CSS). A card that is the page's main image passes `fetchPriority="high"`.
+- Read product photos ONLY from the ONE ordered list: `getHoverImage()` for the card hover swap (the second photo, `null` unless two exist), `getSlideshowImages()` for slideshows/photo counts/tiles, `buildMediaFrames()` for full-page galleries — all from `@usequeek/theme-kit/utils/product-media`. The helpers read the normalized `media.images` list (primary first); the product normalizer derives it from `gallery`/`image` for older payloads, so the same card lights up on listing payloads (capped list) and detail payloads (full gallery) with no per-theme branching.
 - Style framework-owned blocks (divider, embed, video, table, button, image, content/default) via `.theme-<slug> .core-block-*` scoped selectors
 
 ## What themes MUST NOT do
@@ -144,6 +145,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Re-implement checkout flow (fees, submit, payment method selection)
 - Import from other themes
 - Use raw `<img>` tags — use `<Image />` from `@usequeek/theme-kit/components/image` instead
+- Read product photos from `product.media.gallery` — use `media.images` (ordered list, `images[0]` featured) via the kit helpers above
 - Re-implement framework-owned blocks — these live in `@usequeek/theme-kit/shared-blocks`; themes style them via CSS only (see Framework-Owned Blocks below)
 - Generate variant thumbnails — Queek's build pipeline handles this centrally (see Variant Thumbnails below)
 - Reference an external image host or a local file from `demo.json` — run `yarn theme:rehost-images` and commit the rewritten file (see Demo Art Hosting below)
@@ -408,7 +410,7 @@ uploading.
 
 Notes:
 
-- It walks **values**, not field names, so art in a bare array (`products[].media.gallery`)
+- It walks **values**, not field names, so art in a bare array (`products[].media.images`)
   is picked up along with `image`, `thumbnail`, `banner`, `avatar`, and friends. Social
   and video links are classified and left alone.
 - A dead source URL **fails the run** and is listed by name. Replace or remove it
@@ -810,7 +812,7 @@ themes/roast/
 
 ```ts
 // theme.config.ts
-default_demo: { template: 'coffee', label: 'Coffee & café', design_label: 'Roastery', for: ['groceries'], description: '…' },
+default_demo: { template: 'coffee', label: 'Coffee & café', design_label: 'Roastery', for: ['foods', 'health-wellness-store', 'vitamins-supplements', 'fitness-recovery'], description: '…' },
 demos: [
   { id: 'foods', template: 'foods', label: 'Restaurant & takeaway', design_label: "Today's pot", for: ['foods'], description: '…' },
   // A second design of the same template: same business, a different design.
@@ -852,6 +854,13 @@ Every design previews at its own URL, and every link inside it stays on that des
 
 The registry publishes each design as a `demos[]` entry with its own `preview_url`,
 `home_composition`, `page_compositions` and `variant_images`.
+
+A deployment can serve this same preview on its own hostname: set
+`THEME_PREVIEW_HOSTS` to a comma-separated list of exact hosts or one `*` in the
+first label only (e.g. `preview-queek-storefront-*.sslip.io`). Production leaves
+it unset and only `preview.<domain>` previews. Set
+`THEME_STORE_PREVIEW_ORIGIN=https://<that host>` too if the theme store's Preview
+buttons should open it.
 
 What the checker asks of a store, primary or not: the minimums above, Queek-hosted
 art (`--fix` rehosts every file), block types core renders, `profile.slug` and
@@ -1028,22 +1037,28 @@ Rules for template authors:
   kept, answered by `proxy.ts` before anything renders
   (`lib/storefront/utils/preview-routing.ts`). Not moved: `/<slug>` itself, any `~`
   segment, single-template and unknown themes, a last segment with a dot.
-- **Templates and Designs dropdowns.** Every store of a gallery theme gets a
-  **Templates** item at the end of the header menu: "All templates" (the gallery),
-  then each template's design 1. A store whose template has two or more designs also
-  gets a **Designs** item listing that template's designs by `design_label`
-  (`app/preview/_lib/templates-menu.ts`). Both are added at render time, never written
-  into the demo JSON — the backend copies that into real stores. They are `group`
-  items with `url` children, so every header variant a design uses must draw a menu
-  item's children (a dropdown on desktop, indented under it in the mobile menu).
-  `tests/theme-templates-menu.test.tsx` renders each design's own header and fails if
-  any Templates or Designs link is missing. The two extra items make the menu longer:
+- **All templates link and Designs dropdown.** The gallery `/<slug>` is the only page
+  that lists a theme's templates; a template's store never lists the other templates
+  (founder, R2.8). Every store of a gallery theme gets one **All templates** link at
+  the end of the header menu, back to the gallery. A store whose template has two or
+  more designs also gets a **Designs** item listing that template's designs by
+  `design_label`, the one on screen marked `✓` (`app/preview/_lib/templates-menu.ts`).
+  Every store, gallery theme or not, also gets a **Style guide** link to its own
+  `/<slug>[~<id>]/style-guide` (left out when the demo's menu already links one).
+  All are added at render time, never written into the demo JSON — the backend copies
+  that into real stores — and carry `meta: { preview: true }`, so a theme that hides its
+  own menu (the one-page default theme) can still show them. Designs is a `group` item
+  with `url` children, so every header variant a design uses must draw a menu item's
+  children (a dropdown on desktop, indented under it in the mobile menu).
+  `tests/theme-templates-menu.test.tsx` renders each design's own header, fails if the
+  gallery link or a design link is missing, and fails if a store links another
+  template. The extra items make the menu longer:
   a header that sets the menu beside a centred logo must give it its own row when it
   does not fit on one line (medley split, roast centered and carat inline measure it
   with `useCrowdedNav`), never wrap it under itself or run it into the logo.
 - **Embed.** When the merchant dashboard frames a preview, the frame shows exactly
-  the design the merchant is about to activate: no gallery link, no Templates and no
-  Designs dropdown. Embed is on with `?embed=1` on the URL (the dashboard sets it),
+  the design the merchant is about to activate: no All templates link and no Designs
+  dropdown. Embed is on with `?embed=1` on the URL (the dashboard sets it),
   `Sec-Fetch-Dest: iframe` (the browser sends it on every framed page load, so
   in-frame navigation stays embedded), or the `qk-capture` cookie (screenshots). The
   gallery requested in embed is a **307** (never cached) to the main design.
@@ -1074,7 +1089,7 @@ design's screenshot; see [Templates](#templates). With `yarn dev` running,
 screen at its own design URL on `preview.localhost:3001` into `theme.jpg` /
 `demos/<id>.jpg`: the main design at `/<slug>~<main key>`, never `/<slug>`, which is
 the gallery on a theme with 2+ templates. The `qk-capture` cookie leaves the
-preview's Templates and Designs dropdowns out, so the screenshot shows the store as
+preview's All templates link and Designs dropdown out, so the screenshot shows the store as
 a merchant gets it. Then `yarn theme:rehost-images --theme <slug>` uploads them.
 
 ## Registration
