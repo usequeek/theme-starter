@@ -2,12 +2,12 @@
   "name": "@usequeek/theme-starter",
   "version": "0.1.0",
   "private": true,
-  "description": "Start a theme for Queek storefronts: a skeleton theme and the contract it is checked against. The tools (queek-theme) come from npm.",
+  "description": "Start a theme for Queek storefronts: a skeleton theme and the contract it is checked against. The tools (the queek CLI) come from npm.",
   "scripts": {
-    "dev": "queek-theme dev",
-    "check": "queek-theme check",
-    "screenshot": "queek-theme screenshot",
-    "package": "queek-theme package",
+    "dev": "queek theme dev",
+    "check": "queek theme check",
+    "screenshot": "queek theme screenshot",
+    "package": "queek theme package",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,7 +21,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@usequeek/theme-cli": "^0.6.0",
+    "@usequeek/cli": "^0.7.0",
     "typescript": "^5"
   },
   "license": "SEE LICENSE IN LICENSE.md",

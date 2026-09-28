@@ -24,4 +24,4 @@ jobs:
       # in its demo stores, and (once create has run) the theme description.
       # `npm run check` lists them; replace them and this step checks everything.
       - if: github.repository != 'usequeek/theme-starter'
-        run: npx queek-theme check --format github-actions
+        run: npx queek theme check --format github-actions

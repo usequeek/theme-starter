@@ -2,7 +2,7 @@
 > It is maintained in Queek's storefront repository and copied here on every
 > release of this starter. Commands such as `yarn theme:check`, `yarn theme:new`
 > and `yarn theme:pull` run on Queek's side; in this repository you run
-> `npm run dev`, `npm run check` (the same rules, as `queek-theme check`) and
+> `npm run dev`, `npm run check` (the same rules, as `queek theme check`) and
 > `npm run package`, and your theme is the `theme/` folder (what the contract
 > calls `themes/<slug>/`).
 
@@ -20,16 +20,16 @@ npm install @usequeek/theme-kit
 
 Start with **`npm create @usequeek/theme my-theme`** — it copies the public
 [theme starter](https://github.com/usequeek/theme-starter) (theme files only, like
-Shopify's skeleton-theme) and installs the tools, `@usequeek/theme-cli`
+Shopify's skeleton-theme) and installs the tools, `@usequeek/cli`
 ([github.com/usequeek/theme-tools](https://github.com/usequeek/theme-tools)):
 
 ```bash
 npm create @usequeek/theme@latest my-theme -- --templates laundry --tags minimal
 cd my-theme
-npm run dev       # queek-theme dev: every page of every demo store, real Next.js
-npm run check     # queek-theme check: this document's rules, on your machine
-npm run screenshot # queek-theme screenshot: every design's first screen, 1280×800
-npm run package   # queek-theme package: a zip for submission
+npm run dev       # queek theme dev: every page of every demo store, real Next.js
+npm run check     # queek theme check: this document's rules, on your machine
+npm run screenshot # queek theme screenshot: every design's first screen, 1280×800
+npm run package   # queek theme package: a zip for submission
 ```
 
 It walks you through name, templates, primary, categories, tags, pages and AI
@@ -56,7 +56,7 @@ trust that over this copy if the two ever drift.
 
 Everything below still applies: the starter ships the same `_bare` skeleton
 `yarn theme:new` scaffolds (as `theme/`), this document (as `docs/THEME.md`) and the
-business vocabulary. `queek-theme check` runs the same rules as `yarn theme:check`
+business vocabulary. `queek theme check` runs the same rules as `yarn theme:check`
 except the few that need Queek's side (divergence from our themes, the render probe,
 art and screenshot upload), which it lists. The starter is assembled from this repo
 by `yarn starter:publish`; `yarn verify-starter` (CI) proves the whole journey against
@@ -134,7 +134,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Trigger modals via store openers: `useAuthModalStore().open()`, `useCartPanelStore().open()`
 - Use `<Image />` from `@usequeek/theme-kit/components/image` for all images — provides broken-image fallback + Smart Placeholder support (see below)
   - Give product/collection card images `intent="card"`: they are **lazy by default** (a server-rendered grid would otherwise preload and fetch every card image at once, racing the page's CSS). A card that is the page's main image passes `fetchPriority="high"`.
-- Read product photos ONLY from the ONE ordered list: `getHoverImage()` for the card hover swap (the second photo, `null` unless two exist), `getSlideshowImages()` for slideshows/photo counts/tiles, `buildMediaFrames()` for full-page galleries — all from `@usequeek/theme-kit/utils/product-media`. The helpers read the normalized `media.images` list (primary first); the product normalizer derives it from `gallery`/`image` for older payloads, so the same card lights up on listing payloads (capped list) and detail payloads (full gallery) with no per-theme branching.
+- Read product photos ONLY from the ONE ordered list: `getHoverImage()` for the card hover swap (the second photo, `null` unless two exist), `getSlideshowImages()` for slideshows/photo counts/tiles, `buildMediaFrames()` for full-page galleries — all from `@usequeek/theme-kit/utils/product-media`. The helpers read the normalized `media.images` list (primary first, backend-emitted on kit-consumed list/detail (preloaded) payloads), so the same card lights up on listing payloads (capped list) and detail payloads (full list) with no per-theme branching.
 - Style framework-owned blocks (divider, embed, video, table, button, image, content/default) via `.theme-<slug> .core-block-*` scoped selectors
 
 ## What themes MUST NOT do
@@ -146,7 +146,6 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Re-implement checkout flow (fees, submit, payment method selection)
 - Import from other themes
 - Use raw `<img>` tags — use `<Image />` from `@usequeek/theme-kit/components/image` instead
-- Read product photos from `product.media.gallery` — use `media.images` (ordered list, `images[0]` featured) via the kit helpers above
 - Re-implement framework-owned blocks — these live in `@usequeek/theme-kit/shared-blocks`; themes style them via CSS only (see Framework-Owned Blocks below)
 - Generate variant thumbnails — Queek's build pipeline handles this centrally (see Variant Thumbnails below)
 - Reference an external image host or a local file from `demo.json` — run `yarn theme:rehost-images` and commit the rewritten file (see Demo Art Hosting below)
@@ -252,6 +251,39 @@ themes/<slug>/
 ```
 
 ---
+
+## Theme contract
+
+`index.ts` default-exports one `ThemeModule` (`@usequeek/theme-kit/types/theme`). Core loads a
+theme with `import(…).then((m) => m.default)`, so a theme without a default export renders nothing.
+Annotate it — `const theme: ThemeModule = { … }; export default theme;` — so the compiler checks
+every required slot; without the annotation, a missing page surfaces in a live store instead of
+at build time (`theme/module-contract`).
+
+| Slot | Required | What it is |
+|---|---|---|
+| `Layout`, `Header`, `Footer` | yes | The page frame; `Layout` puts the `.theme-<slug>` class on its root |
+| `getHeader(variant?)`, `getFooter(variant?)` | yes | Return the component for a manifest variant |
+| `blocks`, `getBlock(type, variant?)` | yes | The page-builder blocks and their variants |
+| `pages.Home`, `Page`, `Blog`, `Post`, `Collection`, `Product`, `Gallery` | yes | Every page a store can open; `Product` places core's `<ProductMetafields />` |
+| `pages.Shop`, `Collections`, `Policies`, `Metaobject` | no | Core renders its own when absent |
+| `shells` (`CartShell`, `CheckoutShell`, `LoginShell`, `SignupShell`, `AccountShell`) | no | Your frame around core's flows; core supplies defaults |
+| `productCard`, `ModalLayer`, `AuthRenderer` | no | Optional overrides |
+| `manifest` | yes | Variants and metadata (see [Manifest](#manifest)) |
+
+## Component rules
+
+- **The logo is a link home:** `<Link href={`/${vendor.slug}`}>` from `@usequeek/theme-kit/navigation`, never a `<button>`. A button can't be crawled, opened in a new tab or middle-clicked (`theme/code-quality`).
+- **Menu links come from `menuItemToHref()`** (`@usequeek/theme-kit/utils/menu-link`). It resolves the vendor's own domain, subdomain or path; a hand-built URL breaks on at least one of them (`theme/code-quality`).
+- **A component that uses hooks starts with `'use client'`** (`theme/code-quality`).
+- **A vendor's facts never fall back to your words:** tagline, address, phone, email and description render nothing when they are empty (`vendor.phone ?? ''`, or leave the element out). A store with no phone number must not show the demo's (`theme/vendor-facts`).
+
+## Attribution
+
+Every footer variant renders core's `<PoweredByQueek />` from
+`@usequeek/theme-kit/components/powered-by-queek`, in the theme's own placement and spacing.
+Style it through its `core-powered-by` classes; never re-implement its markup
+(`theme/footer-shows-powered-by`).
 
 ## Shop Page (REQUIRED — `pages/shop.tsx`)
 
@@ -1086,7 +1118,7 @@ the first item on the to-do list, not a fault in the scaffold.
 
 1280x800 screenshot of the homepage (`theme.jpg` or `theme.png`) — the main
 design's screenshot; see [Templates](#templates). Outside this repo, `npm run screenshot`
-(`queek-theme screenshot`) captures every design into these files. In this repo, with `yarn dev` running,
+(`queek theme screenshot`) captures every design into these files. In this repo, with `yarn dev` running,
 `yarn theme:capture <slug> [design ids…]` first refreshes `themes/design-index.json`
 (what the preview routes read; commit its diff), then captures every design's first
 screen at its own design URL on `preview.localhost:3001` into `theme.jpg` /

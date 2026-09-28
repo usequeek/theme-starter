@@ -3,7 +3,7 @@
 Build a theme for [Queek](https://usequeek.com) storefronts. This is a complete,
 design-free theme and the contract it is checked against. The tools that
 preview, check and package it come from npm as
-[`@usequeek/theme-cli`](https://github.com/usequeek/theme-tools), so this
+[`@usequeek/cli`](https://github.com/usequeek/theme-tools), so this
 repository holds only your theme and updating the tools never touches it.
 
 ```bash
@@ -28,7 +28,7 @@ A theme is React and CSS. You never configure Next.js; the preview runs it for y
 | `npm run typecheck` | TypeScript. |
 | `npm run package` | Zip the theme for submission. |
 
-Each is a `queek-theme` command; run `npx queek-theme <command> --help` for its options.
+Each is a `queek theme` command; run `npx queek theme <command> --help` for its options.
 CI (`.github/workflows/ci.yml`) runs the type check and the theme check on every push, and
 annotates pull requests with any findings.
 
