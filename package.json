@@ -21,7 +21,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@usequeek/cli": "^0.10.0",
+    "@usequeek/cli": "^0.11.0",
     "typescript": "^5"
   },
   "license": "SEE LICENSE IN LICENSE.md",
