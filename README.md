@@ -6,6 +6,9 @@ preview, check and package it come from npm as
 [`@usequeek/cli`](https://github.com/usequeek/theme-tools), so this
 repository holds only your theme and updating the tools never touches it.
 
+**Guides:** [docs.usequeek.com/docs/themes](https://docs.usequeek.com/docs/themes) — the
+quickstart, how themes work, the requirements, and the CLI and checks reference.
+
 ```bash
 npm create @usequeek/theme my-theme
 cd my-theme

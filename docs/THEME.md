@@ -12,6 +12,9 @@ Every theme lives in `themes/<slug>/` and must satisfy the requirements below.
 
 ## Building from outside this repo
 
+The guides for outside developers are at https://docs.usequeek.com/docs/themes. This document is
+the contract they link to.
+
 You do not need access to this codebase. The framework is published:
 
 ```bash

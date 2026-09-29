@@ -2,7 +2,8 @@
 
 This repository is one theme for Queek storefronts. The theme is the `theme/` folder:
 React components and CSS on top of `@usequeek/theme-kit`. The contract it is checked
-against is `docs/THEME.md`; read it before changing anything.
+against is `docs/THEME.md`; read it before changing anything. The guides are at
+https://docs.usequeek.com/docs/themes (every page as Markdown: https://docs.usequeek.com/llms.txt).
 
 ## Commands
 
