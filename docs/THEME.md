@@ -1010,15 +1010,19 @@ plus `home_composition` / `page_compositions` whose slots are
 text keys of its list entries (steps, slides, FAQ), never links, images, alt text,
 ids, prices or the demo store's own facts (email, phone, address, hours, coupon
 code); the backend builds a section with no vendor facts behind it from them and
-qee rewrites them. The setup wizard publishes a template's homepage onto a new
-store **unchanged**, so write demo copy as a template would say it ("Wash, deep
-condition and braid"), not as one shop would ("filled by hand in our Lekki
-studio"): **no store name** (say "our kitchen", "the studio"), **no place**
-("across the city", or drop it), **no naira amount and no promise only the vendor
-can make** (delivery windows, return periods, free delivery, guarantees), and **no
+qee rewrites them. A section still carrying template copy stays hidden from a
+real store's shoppers until it is rewritten in the store's own words (backend,
+BE32), so demo copy may persuade: how things are made, the services, the story
+and the claims are the demo's to tell ("Filled by hand", "Book a *fitting*").
+What must not carry over is the demo store's identity: **no store name** (say
+"our kitchen", "the studio"), **no place** ("across the city", or drop it), **no
+naira amount and no promise only the vendor can make** (delivery windows, return
+periods, free delivery, guarantees), **no opening hours or schedules**, and **no
 founding date** ("since 2014") or email and phone number in the words.
 Testimonials and reviews are exempt: their copy never reaches a real store.
-`theme/template-copy` rejects the rest (contract R2.6).
+Manifest notes and their quoted examples are different: qee writes fields from
+them directly and they are never hidden, so they carry no claim, service,
+turnaround or offer either. `theme/template-copy` rejects the rest (contract R2.6).
 `tokens` is the store's `config.tokens` — always the dials (sizes, weights,
 spacing, radius, motion); the colours and faces only when the theme's CSS reads
 the kit's colour/face vars (`--brand-*`, `--font-heading`/`--font-body`). A theme
