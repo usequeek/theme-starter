@@ -5,12 +5,15 @@ import { Link } from '@usequeek/theme-kit/navigation';
 import type { ProductsBlockProps } from '@usequeek/theme-kit/types/theme';
 import type { Product } from '@usequeek/theme-kit/types/product';
 import { Image } from '@usequeek/theme-kit/components/image';
+import { useThemeStrings } from '@usequeek/theme-kit/provider';
 import { useProducts } from '@usequeek/theme-kit/hooks/use-products';
 import { useHref } from '@usequeek/theme-kit/hooks/use-href';
 import { formatMoney } from '@usequeek/theme-kit/utils/format';
 
 function ProductCard({ product }: { product: Product }): JSX.Element {
+  const t = useThemeStrings();
   const href = useHref();
+  const price = formatMoney(product.pricing.sale_amount, product.currency);
 
   return (
     <li className="bare-card">
@@ -19,8 +22,7 @@ function ProductCard({ product }: { product: Product }): JSX.Element {
         <h3 className="bare-card__title">{product.title}</h3>
         <p className="bare-card__price">
           {/* A product whose variants span a range has no single price — say so. */}
-          {product.pricing.is_price_from ? 'From ' : ''}
-          {formatMoney(product.pricing.sale_amount, product.currency)}
+          {product.pricing.is_price_from ? t('cart.related.from', { price }) : price}
         </p>
       </Link>
     </li>
@@ -28,6 +30,7 @@ function ProductCard({ product }: { product: Product }): JSX.Element {
 }
 
 export function ProductsBlock({ products: initial, collection, ids, sort, limit, title }: ProductsBlockProps): JSX.Element | null {
+  const t = useThemeStrings();
   const hasInitial = Array.isArray(initial) && initial.length > 0;
   // Handed products by the renderer? Do not fetch. Otherwise ask for them.
   const { products: fetched, isLoading } = useProducts(hasInitial ? undefined : { collection, ids, sort, limit });
@@ -39,7 +42,7 @@ export function ProductsBlock({ products: initial, collection, ids, sort, limit,
     <section className="bare-section" aria-busy={isLoading || undefined}>
       {/* The heading renders before the data does — a section that is blank
           while loading reads as broken, to a vendor and to `theme:check`. */}
-      <h2 className="bare-section__title">{title ?? 'Products'}</h2>
+      <h2 className="bare-section__title">{title ?? t('products.title')}</h2>
       <ul className="bare-grid">
         {(products ?? []).map((product) => <ProductCard key={product.id} product={product} />)}
       </ul>

@@ -3,6 +3,7 @@
 import type { JSX } from 'react';
 import type { CartShellProps } from '@usequeek/theme-kit/types/theme';
 import { Image } from '@usequeek/theme-kit/components/image';
+import { useThemeStrings } from '@usequeek/theme-kit/provider';
 import { formatMoney } from '@usequeek/theme-kit/utils/format';
 
 /**
@@ -10,7 +11,8 @@ import { formatMoney } from '@usequeek/theme-kit/utils/format';
  * quantities, removal, totals — and passes them in; this decides how they look.
  */
 export function CartShell({ items, currency, total, empty, onIncrease, onDecrease, onRemove }: CartShellProps): JSX.Element {
-  if (empty) return <p className="bare-cart__empty">Your cart is empty.</p>;
+  const t = useThemeStrings();
+  if (empty) return <p className="bare-cart__empty">{t('cart.empty.message')}</p>;
 
   return (
     <div className="bare-cart">
@@ -22,16 +24,16 @@ export function CartShell({ items, currency, total, empty, onIncrease, onDecreas
               <h3 className="bare-cart__title">{item.title}</h3>
               <p className="bare-cart__price">{formatMoney(item.unit_price, currency)}</p>
               <div className="bare-cart__qty">
-                <button type="button" onClick={() => onDecrease(item.id, item.shop_id)} aria-label="Decrease">−</button>
+                <button type="button" onClick={() => onDecrease(item.id, item.shop_id)} aria-label={t('cartpanel.decrease')}>−</button>
                 <span>{item.quantity}</span>
-                <button type="button" onClick={() => onIncrease(item.id, item.shop_id)} aria-label="Increase">+</button>
+                <button type="button" onClick={() => onIncrease(item.id, item.shop_id)} aria-label={t('cartpanel.increase')}>+</button>
               </div>
             </div>
-            <button type="button" className="bare-cart__remove" onClick={() => onRemove(item.id, item.shop_id)}>Remove</button>
+            <button type="button" className="bare-cart__remove" onClick={() => onRemove(item.id, item.shop_id)}>{t('cartpanel.remove')}</button>
           </li>
         ))}
       </ul>
-      <p className="bare-cart__total">Total {formatMoney(total, currency)}</p>
+      <p className="bare-cart__total">{t('cartpanel.total', { total: formatMoney(total, currency) })}</p>
     </div>
   );
 }

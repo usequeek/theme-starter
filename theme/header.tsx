@@ -3,7 +3,7 @@
 import type { JSX } from 'react';
 import { Link } from '@usequeek/theme-kit/navigation';
 import type { HeaderProps } from '@usequeek/theme-kit/types/theme';
-import { useStorefront } from '@usequeek/theme-kit/provider';
+import { useStorefront, useThemeStrings } from '@usequeek/theme-kit/provider';
 import { Image } from '@usequeek/theme-kit/components/image';
 import { useCart } from '@usequeek/theme-kit/hooks/use-cart';
 import { useCartPanelStore } from '@usequeek/theme-kit/stores/cart-panel-store';
@@ -11,6 +11,7 @@ import { menuItemKey, menuItemToHref } from '@usequeek/theme-kit/utils/menu-link
 
 export function Header({ menu, logo }: HeaderProps): JSX.Element {
   const { vendor, basePath } = useStorefront();
+  const t = useThemeStrings();
   const { items } = useCart();
   const openCart = useCartPanelStore((state) => state.open);
   const count = items.reduce((total, item) => total + item.quantity, 0);
@@ -23,7 +24,7 @@ export function Header({ menu, logo }: HeaderProps): JSX.Element {
       </Link>
 
       {menu.length > 0 ? (
-        <nav className="bare-header__nav" aria-label="Main">
+        <nav className="bare-header__nav" aria-label={t('header.nav')}>
           {menu.map((item, index) => (
             <Link key={menuItemKey(item, index)} href={menuItemToHref(item, basePath)}>
               {item.label}
@@ -33,7 +34,7 @@ export function Header({ menu, logo }: HeaderProps): JSX.Element {
       ) : null}
 
       <button type="button" className="bare-header__cart" onClick={openCart}>
-        Cart{count > 0 ? ` (${count})` : ''}
+        {count > 0 ? t('header.cart.count', { count }) : t('header.cart.label')}
       </button>
     </header>
   );

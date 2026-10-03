@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@queekai/client-sdk": "^0.3.1",
-    "@usequeek/theme-kit": "^0.1.12",
+    "@usequeek/theme-kit": "^0.1.21",
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -21,7 +21,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@usequeek/cli": "^0.14.0",
+    "@usequeek/cli": "^0.15.0",
     "typescript": "^5"
   },
   "license": "SEE LICENSE IN LICENSE.md",

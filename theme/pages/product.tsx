@@ -5,11 +5,13 @@ import type { ProductPageProps } from '@usequeek/theme-kit/types/theme';
 import { ProductMetafields } from '@usequeek/theme-kit/components/product-metafields';
 import { Image } from '@usequeek/theme-kit/components/image';
 import { useCart } from '@usequeek/theme-kit/hooks/use-cart';
+import { useThemeStrings } from '@usequeek/theme-kit/provider';
 import { useVariantSelection } from '@usequeek/theme-kit/hooks/use-variant-selection';
 import { formatMoney } from '@usequeek/theme-kit/utils/format';
 import { AppBlocks } from '@usequeek/theme-kit/apps';
 
 export function Product({ product, metafieldDefinitions }: ProductPageProps): JSX.Element {
+  const t = useThemeStrings();
   const { addProduct } = useCart();
   // Core owns option state: it seeds from a variant that exists and tells you
   // when the selection resolves to one. Never add without variantSatisfied.
@@ -46,7 +48,7 @@ export function Product({ product, metafieldDefinitions }: ProductPageProps): JS
           disabled={!activeInStock || !variantSatisfied}
           onClick={() => addProduct(product, 1, matchedVariant)}
         >
-          {!variantSatisfied ? 'Select options' : activeInStock ? 'Add to cart' : 'Sold out'}
+          {!variantSatisfied ? t('product.select') : activeInStock ? t('product.add') : t('product.soldout')}
         </button>
 
         <ProductMetafields product={product} definitions={metafieldDefinitions} />

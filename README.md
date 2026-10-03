@@ -102,6 +102,58 @@ use the same hooks they will use in production; only the source of the data chan
   nothing when it is empty.
 - Use `<Image />` from the kit, never a raw `<img>`.
 
+## Translatable text
+
+Every word your theme prints — headings, button labels, `aria-label`s,
+placeholders, empty states — must come from `t()`, never a hard-coded string.
+Merchant data (product titles, menu labels, vendor name) stays as props: only
+your theme's own chrome is translatable.
+
+File layout: `theme/locales/en.default.json` holds every key with its English
+value (this skeleton's file is the template — copy it and change the values,
+never the keys). Each extra language is `theme/locales/{lang}.json` with the
+same keys; `locales/fr.json` at this repo's root is a worked French example to
+copy from. A shopper whose language has no file, or a key missing from it,
+reads the English default value — never a blank, never the raw key.
+
+REQUIRED: reference that file from your theme manifest, or your English is
+blank outside the vendor layout (preview hosts pass no dictionaries of their
+own — the kit falls back to what your manifest carries):
+
+```ts
+import strings from './locales/en.default.json';
+const manifest: ThemeManifest = { /* … */ strings };
+```
+
+The manifest carries ENGLISH ONLY — extra languages stay host-loaded per
+locale and are never bundled into the theme.
+
+Keys are dotted lowercase (`[a-z0-9]+(\.[a-z0-9]+)*`, at most 40 characters).
+Before minting a key, check the kit's English defaults: if the kit already
+owns the string (anything under `cart.*`, …), call that key instead. A key is
+either a leaf value or a parent scope, never both: `header.cart` beside
+`header.cart.count` is rejected — name the leaf `header.cart.label`.
+
+```tsx
+// Client components (anything with 'use client', which is every component
+// that reads data): the existing provider already carries the dictionaries,
+// so just consume them — add no provider.
+import { useThemeStrings } from '@usequeek/theme-kit/provider';
+const t = useThemeStrings();
+<h2>{title ?? t('categories.title')}</h2>
+<button aria-label={t('cartpanel.close')}>×</button>
+<p>{t('cartpanel.total', { total: formatMoney(total, currency) })}</p>
+```
+
+Server components (no hooks) cannot call `useThemeStrings`: give them the
+bound `t` through props from a client parent (or lift the copy up), and keep
+English as the default when no strings arrive, so the theme still renders
+without them.
+
+Counts need plural maps, not ternaries: `{ "header.cart.count": {
+"one": "Cart ({count})", "other": "Cart ({count})" } }` renders through
+`Intl.PluralRules` per shopper locale — `t('header.cart.count', { count })`.
+
 ## Templates and designs
 
 Your theme is the look. A **template** is a business it is dressed as (food, hair,

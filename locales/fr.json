@@ -1,0 +1,30 @@
+{
+  "_example": "SAMPLE translation — copy this file to theme/locales/fr.json and translate the values. The host loads theme/locales/{lang}.json per shopper locale; anything missing falls back to theme/locales/en.default.json (English). Keys, plurals and grammar must stay exactly as documented in the README's Translatable text section.",
+  "header.nav": "Principal",
+  "header.cart.label": "Panier",
+  "header.cart.count": {
+    "one": "Panier ({count})",
+    "other": "Panier ({count})"
+  },
+  "cartpanel.title": "Panier",
+  "cartpanel.close": "Fermer",
+  "cartpanel.decrease": "Diminuer",
+  "cartpanel.increase": "Augmenter",
+  "cartpanel.remove": "Retirer",
+  "cartpanel.total": "Total {total}",
+  "categories.title": "Catégories",
+  "contact.email": "E-mail",
+  "contact.phone": "Téléphone",
+  "contact.address": "Adresse",
+  "contact.hours": "Horaires",
+  "products.title": "Produits",
+  "blog.title": "Journal",
+  "collections.title": "Collections",
+  "shop.title": "Boutique",
+  "shop.filters": "Catégories",
+  "shop.all": "Tout",
+  "shop.loading": "Chargement…",
+  "product.select": "Choisir des options",
+  "product.add": "Ajouter au panier",
+  "product.soldout": "Épuisé"
+}

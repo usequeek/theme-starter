@@ -1,15 +1,19 @@
+'use client';
+
 import type { JSX } from 'react';
 import { Link } from '@usequeek/theme-kit/navigation';
 import type { BlogPageProps } from '@usequeek/theme-kit/types/theme';
 import { Image } from '@usequeek/theme-kit/components/image';
 import { useHref } from '@usequeek/theme-kit/hooks/use-href';
+import { useThemeStrings } from '@usequeek/theme-kit/provider';
 
 export function Blog({ posts }: BlogPageProps): JSX.Element {
+  const t = useThemeStrings();
   const href = useHref();
 
   return (
     <main className="bare-main">
-      <h1 className="bare-page__title">Journal</h1>
+      <h1 className="bare-page__title">{t('blog.title')}</h1>
       <ul className="bare-grid">
         {posts.map((post) => (
           <li key={post.id} className="bare-card">

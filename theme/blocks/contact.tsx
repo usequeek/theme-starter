@@ -1,9 +1,18 @@
+'use client';
+
 import type { JSX } from 'react';
 import type { ContactBlockData } from '@usequeek/theme-kit/types/block';
+import { useThemeStrings } from '@usequeek/theme-kit/provider';
 
 /** How to reach the store: its own words and facts, and nothing when it has none. */
 export function ContactBlock({ heading, description, email, phone, address, hours }: ContactBlockData): JSX.Element | null {
-  const facts: Array<[string, string]> = [['Email', email], ['Phone', phone], ['Address', address], ['Hours', hours]]
+  const t = useThemeStrings();
+  const facts: Array<[string, string]> = [
+    [t('contact.email'), email],
+    [t('contact.phone'), phone],
+    [t('contact.address'), address],
+    [t('contact.hours'), hours],
+  ]
     .filter((fact): fact is [string, string] => typeof fact[1] === 'string' && fact[1].trim() !== '');
   if (!heading && !description && facts.length === 0) return null;
   return (

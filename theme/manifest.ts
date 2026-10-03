@@ -1,4 +1,5 @@
 import type { ThemeManifest } from '@usequeek/theme-kit/types/theme';
+import strings from './locales/en.default.json';
 
 /**
  * ONE variant per scope, and nothing decorative.
@@ -14,6 +15,13 @@ const manifest: ThemeManifest = {
   version: '1.0.0',
   description: 'The starting skeleton for a new theme — the contract with no design opinions.',
   fields_contract: { content: 'structured' },
+  /**
+   * ENGLISH ONLY. The theme's own English travels with the theme: the kit
+   * layers this between host-loaded locale packs and kit core English, so
+   * preview hosts that pass no `strings` still render English, never empty
+   * labels. Per-locale packs (`fr.json`, …) stay host-loaded, never bundled.
+   */
+  strings,
   tokens: {
     color: { primary: '#111111', bg: '#ffffff', text: '#111111' },
     type: { heading_font: 'Inter', body_font: 'Inter', scale_ratio: 1.25, heading_weight: 600, heading_case: 'none', heading_tracking: 0 },

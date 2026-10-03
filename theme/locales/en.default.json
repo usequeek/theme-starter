@@ -1,0 +1,29 @@
+{
+  "header.nav": "Main",
+  "header.cart.label": "Cart",
+  "header.cart.count": {
+    "one": "Cart ({count})",
+    "other": "Cart ({count})"
+  },
+  "cartpanel.title": "Cart",
+  "cartpanel.close": "Close",
+  "cartpanel.decrease": "Decrease",
+  "cartpanel.increase": "Increase",
+  "cartpanel.remove": "Remove",
+  "cartpanel.total": "Total {total}",
+  "categories.title": "Categories",
+  "contact.email": "Email",
+  "contact.phone": "Phone",
+  "contact.address": "Address",
+  "contact.hours": "Hours",
+  "products.title": "Products",
+  "blog.title": "Journal",
+  "collections.title": "Collections",
+  "shop.title": "Shop",
+  "shop.filters": "Categories",
+  "shop.all": "All",
+  "shop.loading": "Loading…",
+  "product.select": "Select options",
+  "product.add": "Add to cart",
+  "product.soldout": "Sold out"
+}
