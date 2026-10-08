@@ -52,7 +52,7 @@ It provides the data hooks (`useProducts`, `useShop`, `useCart`…), the flows Q
 
 ## Previewing
 
-Every demo store is a **template**, one business your theme can dress. `/default` is
+Every demo store is a **design** of a template (one business your theme can dress). `/default` is
 `theme/demo.json`. Each `theme/demos/<id>.json` is another store at `/<id>`. Under each store:
 
 | URL | Page | Your component |

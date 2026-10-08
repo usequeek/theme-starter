@@ -1,30 +1,25 @@
 > **This is the contract every Queek theme is checked against when it is submitted.**
-> It is maintained in Queek's storefront repository and copied here on every
-> release of this starter. Commands such as `yarn theme:check`, `yarn theme:new`
-> and `yarn theme:pull` run on Queek's side; in this repository you run
-> `npm run dev`, `npm run check` (the same rules, as `queek theme check`) and
-> `npm run package`, and your theme is the `theme/` folder (what the contract
-> calls `themes/<slug>/`).
+> You work with `npm run dev`, `npm run check` (the same rules, as `queek theme check`),
+> `npm run screenshot` and `npm run package`, and your theme is the `theme/` folder.
 
 # Theme Specification
 
-Every theme lives in `themes/<slug>/` and must satisfy the requirements below.
+Every theme lives in `theme/` and must satisfy the requirements below.
 
 ## Building from outside this repo
 
-The guides for outside developers are at https://docs.usequeek.com/docs/themes. This document is
-the contract they link to.
+The guides are at https://docs.usequeek.com/docs/themes. This document is the contract they
+link to.
 
-You do not need access to this codebase. The framework is published:
+The framework is published, so you need nothing but npm:
 
 ```bash
 npm install @usequeek/theme-kit
 ```
 
 Start with **`npm create @usequeek/theme my-theme`** — it copies the public
-[theme starter](https://github.com/usequeek/theme-starter) (theme files only, like
-Shopify's skeleton-theme) and installs the tools, `@usequeek/cli`
-([github.com/usequeek/theme-tools](https://github.com/usequeek/theme-tools)):
+[theme starter](https://github.com/usequeek/theme-starter) (theme files only) and installs the
+tools, `@usequeek/cli` ([github.com/usequeek/theme-tools](https://github.com/usequeek/theme-tools)):
 
 ```bash
 npm create @usequeek/theme@latest my-theme -- --templates laundry --tags minimal
@@ -57,19 +52,10 @@ assistants — every answer is also a flag, so the whole thing can be scripted
 `--help` prints the current list from the installed `@usequeek/create-theme`;
 trust that over this copy if the two ever drift.
 
-Everything below still applies: the starter ships the same `_bare` skeleton
-`yarn theme:new` scaffolds (as `theme/`), this document (as `docs/THEME.md`) and the
-business vocabulary. `queek theme check` runs the same rules as `yarn theme:check`
-except the few that need Queek's side (divergence from our themes, the render probe,
-art and screenshot upload), which it lists. The starter is assembled from this repo
-by `yarn starter:publish`; `yarn verify-starter` (CI) proves the whole journey against
-the published tools.
-
-Send the finished theme as a git URL or a directory. It comes in through
-`yarn theme:pull <source>`, which rehosts your demo art onto our CDN, runs the
-rules in this document, and publishes — or removes every trace and tells you
-exactly what failed. There is no partial submission: a theme that would render
-holes in a vendor's store does not land.
+Everything below applies as it is: the starter ships the bare skeleton (as `theme/`),
+this document (as `docs/THEME.md`) and the business vocabulary
+(`docs/business-vocabulary.json`). Send the finished theme as a git URL or the zip from
+`npm run package` (see [Submit your theme](https://docs.usequeek.com/docs/themes/submit)).
 
 The rules that get a theme rejected are not style preferences. Never fetch,
 never touch the SDK, never mutate a store, never hardcode data a real store
@@ -80,15 +66,14 @@ is empty on a live storefront.
 
 ```bash
 # 1. Scaffold from the bare skeleton — never from a finished theme
-yarn theme:new aurora --name "Aurora" --prefix au
+npm create @usequeek/theme my-theme
 
 # 2. Preview it
-yarn dev                                  # → preview.localhost:3001/aurora
+npm run dev                               # → http://localhost:7833
 
 # 3–5. Build. Then, whenever you want to know where you stand:
-yarn theme:check aurora                   # what would block publication, and why
-yarn theme:check aurora --json            # same, for an agent to iterate against
-yarn theme:check aurora --fix             # the fixes that need no decision
+npm run check                             # what would block publication, and why
+npx queek theme check --json              # same, for an agent to iterate against
 ```
 
 **3. Write the components.** `layout`, `header`, `footer`, `blocks/`, `pages/`,
@@ -106,17 +91,13 @@ rejections come from, and the rules explain each one.
 nothing in the merchant's editor.
 
 **6. Rewrite `demo.json`.** It looks like filler and is not: it is both what a
-vendor previews before choosing your theme AND what the store builder composes
-real stores from. Reference art on any CDN — it gets rehosted when your theme is
+vendor previews before choosing your theme AND what Queek composes real stores
+from. Reference art on any public URL — it gets rehosted when your theme is
 published.
 
-**7. Submit.** Open a PR, or send the folder and a maintainer runs
-`yarn theme:pull <path|git-url>`. Same rules either way, and a theme publishes
-only when every blocking finding is clear.
+**7. Submit.** See [Submitting a theme built outside this repo](#submitting-a-theme-built-outside-this-repo).
 
-The rules in `yarn theme:check` are the same ones CI runs — there is no second
-definition of "valid" waiting to reject you later. When this document and the
-checker disagree, the checker is the contract.
+When this document and the checker disagree, the checker is the contract.
 
 ## Core Principle
 
@@ -137,7 +118,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Trigger modals via store openers: `useAuthModalStore().open()`, `useCartPanelStore().open()`
 - Use `<Image />` from `@usequeek/theme-kit/components/image` for all images — provides broken-image fallback + Smart Placeholder support (see below)
   - Give product/collection card images `intent="card"`: they are **lazy by default** (a server-rendered grid would otherwise preload and fetch every card image at once, racing the page's CSS). A card that is the page's main image passes `fetchPriority="high"`.
-- Read product photos ONLY from the ONE ordered list: `getHoverImage()` for the card hover swap (the second photo, `null` unless two exist), `getSlideshowImages()` for slideshows/photo counts/tiles, `buildMediaFrames()` for full-page galleries — all from `@usequeek/theme-kit/utils/product-media`. The helpers read the normalized `media.images` list (primary first, backend-emitted on kit-consumed list/detail (preloaded) payloads), so the same card lights up on listing payloads (capped list) and detail payloads (full list) with no per-theme branching.
+- Read product photos ONLY from the ONE ordered list: `getHoverImage()` for the card hover swap (the second photo, `null` unless two exist), `getSlideshowImages()` for slideshows/photo counts/tiles, `buildMediaFrames()` for full-page galleries — all from `@usequeek/theme-kit/utils/product-media`. The helpers read the normalized `media.images` list (primary first, as the Queek API returns it on list and detail payloads), so the same card lights up on listing payloads (capped list) and detail payloads (full list) with no per-theme branching.
 - Style framework-owned blocks (divider, embed, video, table, button, image, content/default) via `.theme-<slug> .core-block-*` scoped selectors
 
 ## What themes MUST NOT do
@@ -151,72 +132,62 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Use raw `<img>` tags — use `<Image />` from `@usequeek/theme-kit/components/image` instead
 - Re-implement framework-owned blocks — these live in `@usequeek/theme-kit/shared-blocks`; themes style them via CSS only (see Framework-Owned Blocks below)
 - Generate variant thumbnails — Queek's build pipeline handles this centrally (see Variant Thumbnails below)
-- Reference an external image host or a local file from `demo.json` — run `yarn theme:rehost-images` and commit the rewritten file (see Demo Art Hosting below)
-- Load fonts with `next/font/google` or a `fonts.googleapis.com` `@import` — ship the files in `themes/<slug>/fonts/` (see Fonts below)
+- Reference a local file from `demo.json` — use a public image URL; Queek rehosts it when your theme is published (see Demo Art Hosting below)
+- Load fonts with `next/font/google` or a `fonts.googleapis.com` `@import` — ship the files in `theme/fonts/` (see Fonts below)
 - Import Next.js (`next`, `next/link`, `next/navigation`, `next/image`, `next/font/*` …). Link and navigate with `import { Link, useRouter, usePathname } from '@usequeek/theme-kit/navigation';`, and use the kit's `<Image />` for images. Queek decides which framework runs the storefront, so only the kit may know it — `theme/core-boundary` rejects any `next` import
-- Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. A throw while server rendering your Layout, header or any page is a **failed request (500)**, not a quiet fallback to the browser — the page is deliberately not wrapped in a Suspense boundary, so a missing product or page can answer a real 404. `tests/theme-pages-ssr.test.tsx` server-renders every page of every demo store (which is why demo data must use the real API shapes — a variant is `option_values` / `pricing` / `inventory`, not a `{ Colour: 'Red' }` map)
+- Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. A throw while server rendering your Layout, header or any page is a **failed request (500)**, not a quiet fallback to the browser — the page is deliberately not wrapped in a Suspense boundary, so a missing product or page can answer a real 404. Every page of every demo store is server-rendered when your theme is checked, which is why demo data must use the real API shapes — a variant is `option_values` / `pricing` / `inventory`, not a `{ Colour: 'Red' }` map
 - Pass `renderMarkdown(…)` to `dangerouslySetInnerHTML` — it returns React elements, not an HTML string, so the page shows "[object Object]". Render the elements as children (`<div className="…">{renderMarkdown(text, basePath)}</div>`) or use `<Markdown>` from `@usequeek/theme-kit/components/markdown`; `theme/markdown-html` rejects it
-- Link a demo store to a page it does not have — missing pages are real 404s. `tests/demo-links.test.ts` checks every menu item, block link and markdown link in `demo.json` and `demos/*.json`
+- Link a demo store to a page it does not have — missing pages are real 404s. Every menu item, block link and markdown link in `demo.json` and `demos/*.json` must open a page of that store
 
 ---
 
 ## Submitting a theme built outside this repo
 
-```bash
-yarn theme:pull <local-path|git-url> [--as <slug>] [--keep-on-fail]
-```
+Send the git URL, or the zip from `npm run package` (it holds the theme folder and never
+`node_modules`, `.queek` or `.git`), to the Queek team. Queek runs the same rules as
+`npm run check` plus the few only it can run, and publishes only if every blocking
+finding is clear. **All or nothing**: a rejected submission leaves nothing behind, so a
+half-registered theme can never render holes in a vendor's store. The rules only Queek can
+run — divergence from Queek's own themes, the render probe, the art and screenshot
+upload — are listed at the end of `npm run check`'s report.
 
-It copies the theme in, runs the same rules `yarn theme:check` and CI run, and
-publishes only if every blocking finding is clear — registering the loader entry
-and regenerating the registry. **All or nothing**: a rejected pull removes the
-copy and rolls back the loader entry, so a half-registered theme can never
-render holes in a vendor's store. `--keep-on-fail` leaves the files for
-inspection, still unpublished.
-
-**Assets.** Build against whatever CDN you like — `theme:pull` moves your demo
-art onto Queek's CDN before it validates, and rewrites `demo.json` to match. You
-never need our storage credentials, and the "no foreign hosts" rule is satisfied
-by the pipeline rather than by you. (Working inside this repo instead? `yarn
-theme:check <slug> --fix` does the same thing.) A dead or unreachable image
-fails the pull — it is named, and nothing is published.
-
-Validation renders the theme, so pulling runs third-party code in that process.
-No scripts from the pulled repo are executed and its `node_modules`/`.git` are
-never copied, but it is a deliberate act — read what you pull.
+**Assets.** Build against whatever public image host you like — Queek moves your demo
+art onto its CDN before it validates, and rewrites `demo.json` to match. You never need
+Queek's storage credentials, and the "no foreign hosts" rule is satisfied by Queek
+rather than by you. A dead or unreachable image fails the submission — it is named, and
+nothing is published.
 
 ---
 
 ## Starting a new theme
 
 ```bash
-yarn theme:new <slug> --name "Display Name" --prefix xx
+npm create @usequeek/theme my-theme
 ```
 
-It scaffolds from **`themes/_bare`** — the contract with no design in it:
+It scaffolds from **the bare skeleton** — the contract with no design in it:
 semantic markup, token-wired CSS, correct data binding, one variant per scope.
 It rewrites every identity reference (manifest slug, config, `.theme-<slug>`
-root class, CSS prefix, demo profile), registers the theme in `vendor-shell.tsx`
-— a theme missing from that map never renders — and regenerates the registry.
-The result passes `yarn theme:check` on day one, so every later failure is about
+root class, CSS prefix, demo profile), one name everywhere. What `npm run check`
+prints for a fresh theme is your to-do list — the stand-ins you replace (see
+[Placeholder content](#placeholder-content)) — so every later failure is about
 your work rather than the skeleton.
 
-**Do not start from a finished theme.** `--from <theme>` exists, but whatever
-you start from you inherit, and inherited design is the thing nobody goes back
-and rewrites — six themes here still share one hand-rolled product page because
-of exactly that. Start bare and let the rules tell you what is missing.
+**Do not start from a finished theme.** Whatever you start from you inherit, and
+inherited design is the thing nobody goes back and rewrites. Start bare and let
+the rules tell you what is missing.
 
 It gives you a working theme, not a designed one. What you own from there: the
 tokens and CSS, the layout and chrome, the blocks, and **`demo.json`** — it is
-still the base theme's store, and it is both what vendors preview and what the
-backend builder composes real stores from. Replace the art, then run
-`yarn theme:rehost-images --theme <slug>`.
+still the skeleton's store, and it is both what vendors preview and what Queek
+composes real stores from. Replace the art.
 
 ---
 
 ## Required Files
 
 ```
-themes/<slug>/
+theme/
   index.ts              # ThemeModule default export
   manifest.ts           # Theme metadata + variant declarations
   theme.config.ts       # Author, tags, categories, rank
@@ -226,7 +197,7 @@ themes/<slug>/
   theme.css             # Design tokens + .core-* class styling
   demo.json             # Preview data — MUST showcase every component (see below)
   demos/<id>.json       # Optional alternative stores (see Alternative demo stores)
-  theme.png             # Screenshot (1280x800)
+  theme.jpg             # Screenshot (1280x800); theme.png also works
   blocks/
     gallery.tsx              # Identity block — hero slideshow/image
     products.tsx             # Identity block — product grid/carousel
@@ -332,16 +303,15 @@ const { products, isLoading, pagination } = useShop({
 **The first page is server-rendered.** On a live store, `/shop` fetches the page your
 `useShop` call will ask for — this URL's filters, read exactly as `useShopParams` reads them,
 at `perPage: 24` — and hands it to `useShop`, so the product grid is in the HTML instead of
-appearing after the JS has run and fetched it (kili-foods `/shop`: products visible 1.7 s →
-0.5 s, measured 24/9/26). Only an exact match is used: a call with other filters or another
-page size just fetches in the browser, as it always has. Filtering and paging after load fetch
+appearing after the JS has run and fetched it. Only an exact match is used: a call with other filters or
+another page size just fetches in the browser, as it always has. Filtering and paging after load fetch
 in the browser too. Preview (demo stores) filters the demo catalogue in memory.
 
 ### Backend endpoint (for reference — do NOT call directly)
 
-`GET /api/v1/client/store/products?per_page=24&page=1&category_slug=soups&keyword=&sort=latest`
-
-Returns paginated product objects with the same shape as collection products. The `meta` block contains `current_page`, `per_page`, `from`, `to` (use `to - from + 1 >= per_page` as `hasMore`).
+`useShop` is backed by Queek's products API, which returns paginated product objects with
+the same shape as collection products. You never call it yourself: the hook hands you
+`products` and `pagination`, and `pagination.hasMore` tells you whether to offer "Load more".
 
 ### Design requirements
 
@@ -386,7 +356,7 @@ The homepage defined in `demo.json` must include sections using each of the foll
 | `table` | RECOMMENDED | Specs or pricing table (framework-owned) |
 | `video` | RECOMMENDED | Video embed (framework-owned) |
 
-**Why this matters:** The homepage is what vendors see when previewing a theme. It's also what our automated capture pipeline uses to generate Section Library thumbnails. If a component type is missing from the homepage, vendors won't see what it looks like in your theme before using it.
+**Why this matters:** The homepage is what vendors see when previewing a theme. It's also what Queek's automated capture uses to generate Section Library thumbnails. If a component type is missing from the homepage, vendors won't see what it looks like in your theme before using it.
 
 **Minimum section count:** 8+ sections on the homepage. A sparse homepage does not sell the theme.
 
@@ -419,45 +389,35 @@ The homepage defined in `demo.json` must include sections using each of the foll
 
 Every variant you declare in `manifest.ts` should appear at least once on the homepage. If your theme declares `gallery: [slider, mosaic]`, the homepage should have BOTH a slider gallery AND a mosaic gallery section.
 
-**This is enforced.** `tests/theme-metadata.test.ts` fails if any `gallery`/`products`/`categories`/`content` variant that is auto-pickable (i.e. not `auto_pick: false` — see Selection Metadata below) is missing from `demo.json` (home composition and/or any page). `header`/`footer` are exempt (only one renders per page); `auto_pick: false` variants are exempt (legitimately never auto-shown).
+**This is enforced.** `npm run check` fails (`theme/demo-completeness`) if any `gallery`/`products`/`categories`/`content` variant that is auto-pickable (i.e. not `auto_pick: false` — see Selection Metadata below) is missing from `demo.json` (home composition and/or any page). `header`/`footer` are exempt (only one renders per page); `auto_pick: false` variants are exempt (legitimately never auto-shown).
 
 ### Demo Art Hosting (MANDATORY)
 
-**Every image in `demo.json` MUST be served from `media.usequeek.com`. No external
-image host. No local file.**
+**Every image in `demo.json` is served from `media.usequeek.com` once your theme is
+published. No external image host. No local file.**
 
-Your demo art is not preview-only. `/api/theme-registry` publishes it to the backend as
-`variant_images`, keyed `{type}/{variant}`, and the store builder fills real vendor
-stores with it — a `gallery/mosaic` that declares five images hands the builder five,
-in the order you wrote them. A vendor's new store opens looking like *your* theme
-instead of one shared placeholder set. That means a foreign URL is someone else's CDN
-serving Queek customers, and a local path is a file that exists only in your checkout.
+Your demo art is not preview-only. Queek publishes it with your theme, keyed
+`{type}/{variant}`, and fills real vendor stores with it — a `gallery/mosaic` that
+declares five images hands the store builder five, in the order you wrote them. A
+vendor's new store opens looking like *your* theme instead of one shared placeholder set.
+That means a foreign URL is someone else's CDN serving Queek customers, and a local path
+is a file that exists only on your machine.
 
-Pick whatever art you like while designing, then before you commit:
-
-```bash
-yarn theme:rehost-images --theme <your-theme>
-```
-
-It walks `demo.json`, uploads every image to
-`theme-assets/{theme}/{content-hash}.jpg`, and rewrites the file in place. Commit the
-rewritten `demo.json`. The command is idempotent — a second run uploads nothing and
-changes no lines — so re-run it any time you add art. `--dry-run` reports without
-uploading.
+You do not upload anything yourself. Pick whatever art you like while designing, and
+reference it by public URL. When you submit, Queek uploads every image to its CDN and
+rewrites `demo.json` to point at the copies.
 
 Notes:
 
-- It walks **values**, not field names, so art in a bare array (`products[].media.images`)
+- Art is found by **value**, not field name, so art in a bare array (`products[].media.images`)
   is picked up along with `image`, `thumbnail`, `banner`, `avatar`, and friends. Social
   and video links are classified and left alone.
-- A dead source URL **fails the run** and is listed by name. Replace or remove it
-  yourself — the command will not invent art.
-- **This is enforced twice.** `tests/theme-metadata.test.ts` fails in CI, and
-  `/api/theme-registry` refuses to serve the registry at all if any live theme still
-  references art Queek does not host.
+- A dead source URL **fails the submission** and is listed by name. Replace or remove it
+  yourself — Queek will not invent art.
+- A theme whose demo art is not on Queek's CDN is not published.
 
 Use as many images per section as the variant is designed to show. The count you write
-is the count the builder gets.
+is the count the store builder gets.
 
 ---
 
@@ -559,29 +519,26 @@ are resolved server-side — block data always reaches a theme as literals.
 
 ## Fonts
 
-A theme's fonts ship **as files inside the theme** — `themes/<slug>/fonts/` — never
-fetched from Google, at build time or on page load. `yarn theme:check` enforces it
+A theme's fonts ship **as files inside the theme** — `theme/fonts/` — never
+fetched from Google, at build time or on page load. `npm run check` enforces it
 (`theme/fonts-self-hosted`).
 
 - **`next/font/google` is rejected.** It downloads the fonts during `next build`, and
   Google intermittently answers with `fonts.gstatic.com/l/font?kit=…&skey=…` URLs that
   Turbopack cannot parse — the build fails with *"next/font/google queries have exactly
   one entry"* ([vercel/next.js#99114](https://github.com/vercel/next.js/issues/99114)).
-  It failed a production deploy on 23/9/26.
 - **A Google Fonts `@import` in your CSS is rejected.** The bundler silently drops it
-  unless it ends up the very first rule of the compiled stylesheet — atelier, deluxr
-  and lumiere shipped that way, and a store without a matching brand font never got
-  their fonts at all — and when it survives, every page waits on a render-blocking
-  request to Google (another origin: DNS + TLS) before any text can paint. A theme
-  that had one can vendor exactly what Google served: fetch the CSS2 URL with a
-  Chrome user agent, download each `woff2` it names, and keep the rules as they are
-  (see `themes/lumiere/fonts/`).
+  unless it ends up the very first rule of the compiled stylesheet — so a store without a
+  matching brand font never gets the theme's fonts at all — and when it survives, every
+  page waits on a render-blocking request to Google (another origin: DNS + TLS) before any
+  text can paint. If you have one, vendor exactly what Google served: fetch the CSS2 URL
+  with a Chrome user agent, download each `woff2` it names, and keep the rules as they are.
 
-How to add one (see `themes/carat/fonts/` for a complete example):
+How to add one:
 
-1. Put the `.woff2` files in `themes/<slug>/fonts/` — one file per subset (latin,
+1. Put the `.woff2` files in `theme/fonts/` — one file per subset (latin,
    latin-ext for ₦ and accented letters, vietnamese for Yoruba ẹ/ọ, …).
-2. Declare them in `themes/<slug>/fonts/fonts.css` with `@font-face` — `font-display:
+2. Declare them in `theme/fonts/fonts.css` with `@font-face` — `font-display:
    swap` and the subset's `unicode-range`, so a browser downloads only the files the
    page's text needs.
 3. Add a size-adjusted fallback face (`src: local("Arial")` with `size-adjust` /
@@ -591,6 +548,16 @@ How to add one (see `themes/carat/fonts/` for a complete example):
 4. `import './fonts/fonts.css';` at the top of `layout.tsx`, before `theme.css`.
 
 Never `preload` a theme font: every theme's layout is in every store's bundle, so a preload downloads it on every store, whatever its theme.
+
+## Locales
+
+Every word your theme prints comes from `t()`, never a hard-coded string. The theme's English
+lives in `theme/locales/en.default.json` and is referenced from `manifest.ts` as `strings`;
+each other language is a `theme/locales/{lang}.json` file with the same keys.
+`npm run check` enforces it (`theme/no-hardcoded-strings` and the `theme/locale-*` rules).
+The rules in full are in the README under
+[Translatable text](../README.md#translatable-text) and in
+[Translating your theme](https://docs.usequeek.com/docs/themes/translations).
 
 ## Smart Placeholders
 
@@ -621,107 +588,50 @@ When a vendor's image field is empty, `<Image>` generates a theme-aware SVG plac
 
 ## Variant Thumbnails (MANAGED BY QUEEK — NOT BY THEME AUTHORS)
 
-The merchant editor shows a **Section Library drawer** where vendors browse thumbnails of every variant you declare. **You do NOT generate these thumbnails.** Queek's centralized build pipeline handles variant capture automatically.
+The merchant editor shows a **Section Library drawer** where vendors browse thumbnails of every variant you declare. **You do NOT generate these thumbnails.** Queek captures them for you.
 
 ### How it works (for your understanding — you don't run this)
 
-1. Our pipeline reads your `manifest.ts` for declared variants
-2. Each variant is rendered in isolation at `/preview/<theme>/variant?type=<type>&variant=<id>` using your theme's demo data + Smart Placeholders
-3. Playwright screenshots each render and writes `.jpg` tiles to `public/variant-thumbs/<theme>/`
-4. An `index.json` manifest maps every variant to its thumbnail URL
-5. The merchant drawer reads this manifest and displays the thumbnails
+1. Queek reads your `manifest.ts` for declared variants
+2. Each variant is rendered in isolation, using your theme's demo data and Smart Placeholders
+3. Queek screenshots each render
+4. The merchant drawer displays the thumbnails
 
 ### What this means for you
 
-- **Do NOT run `yarn capture-variants`** — that's an internal tool for the Queek team
-- **Do NOT commit files to `public/variant-thumbs/`** — the pipeline generates these
+- **Do NOT commit variant thumbnails** — Queek generates them
 - **DO declare every variant in `manifest.ts`** with `id`, `label`, `purpose`, and optional `default`
-- **DO include every variant on your homepage in `demo.json`** — the pipeline uses your demo data for realistic renders
+- **DO include every variant on your homepage in `demo.json`** — the capture uses your demo data for realistic renders
 - **DO use `<Image>` with `placeholder` props** — thumbnails look better when Smart Placeholders fire (branded gradients vs empty boxes)
-
-### Local development preview
-
-While building, you can preview any variant in isolation locally:
-
-```
-http://127.0.0.1:3001/preview/my-theme/variant?type=products&variant=carousel
-```
-
-This renders your block with stub data and your theme's CSS so you can iterate without running the full capture pipeline.
 
 ---
 
 ## Temporary Files Policy
 
-All Playwright screenshots, capture artifacts, and AI QA outputs MUST be written to `.ai/<theme_name>/tmp/` — never to the project root, `public/`, or any committed directory.
+`npm run dev` writes the preview app to `.queek/preview` in your project and regenerates it on every run. `.queek/` is git-ignored: never commit it. Likewise keep screenshots, captures and other working files out of `theme/` and out of version control; the only screenshots your theme ships are the design screenshots `npm run screenshot` writes (see [theme.png](#themepng)).
 
-```
-.ai/
-  lumiere/
-    tmp/           ← screenshots, captures, QA reports land here
-  nova/
-    tmp/
-  my-new-theme/
-    tmp/
-```
-
-**Rules:**
-- The pipeline writes all intermediate files to `.ai/<theme>/tmp/`
-- After each capture or QA run completes, the `tmp/` directory is **cleaned automatically**
-- Only final outputs (committed thumbnails in `public/variant-thumbs/`) persist — everything else is ephemeral
-- `.ai/*/tmp/` is in `.gitignore` — never committed
-- Theme authors should NOT manually create or modify files in `.ai/`
-
-This applies to:
-- `yarn capture-variants` — intermediate screenshots before final `.jpg` output
-- `yarn theme:check` (upcoming) — QA screenshots + AI review artifacts
-- Any Playwright-based tooling that renders theme pages
-
-**Shared Chromium binary:** All Playwright-based tools use a single Chromium
-installation at `.ai/browsers/` (set via `PLAYWRIGHT_BROWSERS_PATH`). This
-prevents each tool or AI agent from downloading its own ~170 MB copy. The
-capture script auto-installs Chromium on first run if missing. The directory
-is gitignored but persists on the machine across runs.
+`npm run screenshot` needs a Chromium-based browser: Google Chrome, Microsoft Edge, or Playwright's own Chromium (`npx playwright install chromium`).
 
 ---
 
 ## Visual QA During Development (RECOMMENDED)
 
-Use the local preview system to visually verify your theme as you build. Here's a workflow:
+Use the local preview to visually verify your theme as you build. Here's a workflow:
 
-### 1. Preview your homepage
-
-```
-http://127.0.0.1:3001/preview/my-theme
-```
-
-Verify: all required sections present, layout balanced, typography readable, spacing consistent, brand colors applied.
-
-### 2. Preview individual variants
+### 1. Preview your stores
 
 ```
-http://127.0.0.1:3001/preview/my-theme/variant?type=gallery&variant=cinematic
-http://127.0.0.1:3001/preview/my-theme/variant?type=products&variant=carousel
-http://127.0.0.1:3001/preview/my-theme/variant?type=categories&variant=showcase
+npm run dev
 ```
 
-Verify: each variant renders standalone without layout breaks.
+Open the store at `http://localhost:7833/default` (the port is the next free one if 7833 is taken; the command prints the URL), and each `/<id>` for the other designs. Verify: all required sections present, layout balanced, typography readable, spacing consistent, brand colors applied.
 
-### 3. Check responsive breakpoints
+### 2. Check responsive breakpoints
 
 Use browser DevTools device toolbar to verify at:
 - Desktop (1440px)
 - Tablet (768px)
 - Mobile (390px)
-
-### 4. AI-Powered Visual QA (coming soon)
-
-A `yarn theme:check my-theme` command will be available that:
-1. Captures your homepage + all variants via Playwright
-2. Sends screenshots to an AI vision model for automated review
-3. Reports: missing sections, alignment issues, broken layouts, accessibility problems
-
-This is being built — theme authors will get a one-command QA gate before PR submission.
 
 ---
 
@@ -783,13 +693,13 @@ export default manifest;
 - `purpose` — one sentence (under 80 chars) explaining WHEN to use this variant. This is searchable in the Section Library drawer.
 - `default` — (optional) mark one variant per scope as the default
 
-**Bump `version`** when you make visual changes to existing variants. This signals the pipeline to re-capture thumbnails.
+**Bump `version`** when you make visual changes to existing variants. This signals Queek to re-capture thumbnails.
 
 ---
 
 ## Selection Metadata (best_for / auto_pick / min_images)
 
-These three optional per-variant fields drive **qee** / `BuildHomepageTool` (queek_backend) — the AI store builder that auto-picks a variant for each scope when it composes a vendor's homepage. Setting them well is how your theme gets picked *well* instead of by generic defaults. They are id-agnostic: the builder never special-cases a variant by name, only by these fields.
+These three optional per-variant fields tell Queek's AI store builder which variant to pick for each scope when it composes a vendor's homepage. Setting them well is how your theme gets picked *well* instead of by generic defaults. They are id-agnostic: the builder never special-cases a variant by name, only by these fields.
 
 ```typescript
 { id: 'featured', label: 'Featured Grid', purpose: '…', best_for: ['food', 'supermarket', 'pharmacy'] },
@@ -797,19 +707,17 @@ These three optional per-variant fields drive **qee** / `BuildHomepageTool` (que
 { id: 'mosaic', label: 'Mosaic Grid', purpose: '…', min_images: 3 },
 ```
 
-- **`best_for?: string[]`** — the business buckets this variant is a strong fit for. Boosts this variant's score when the builder composes a homepage for a vendor in that bucket. Omitted = universal (no bucket boost, still eligible). Values MUST be one of the `config/category_packs.php` (queek_backend) bucket keys — no other strings are valid:
+- **`best_for?: string[]`** — the business buckets this variant is a strong fit for. Boosts this variant's score when the builder composes a homepage for a vendor in that bucket. Omitted = universal (no bucket boost, still eligible). Values MUST be one of these bucket keys, written exactly as shown — no other strings are valid:
 
   `food` · `supermarket` · `product` · `pharmacy` · `laundry` · `delivery` · `service` · `gas-refill` · `local_market`
 
-  (`_`/`-` are treated as equivalent by the backend matcher, but write the hyphenated form above.)
-
-- **`auto_pick?: boolean`** — default `true`. Set `false` on special-purpose variants the AI builder must NEVER auto-select for a vendor: review/testimonial screenshot walls, decorative-only galleries, or focused/checkout chrome (e.g. a `minimal` header). Manual selection (vendor or qee editing directly) is still allowed — this only blocks the *automatic* first-build pick.
+- **`auto_pick?: boolean`** — default `true`. Set `false` on special-purpose variants the AI builder must NEVER auto-select for a vendor: review/testimonial screenshot walls, decorative-only galleries, or focused/checkout chrome (e.g. a `minimal` header). Manual selection (by the vendor, or by Queek's AI editing directly) is still allowed — this only blocks the *automatic* first-build pick.
 
 - **`min_images?: number`** — **gallery scope only.** The minimum hero slides this variant needs to look right (e.g. a mosaic collage needs 3). The builder gates on the vendor's actual resolved hero slide count (banner → 1 slide; else up to 5 real product photos; else 1 placeholder) and only offers the variant when there's enough material. Omitted = `1`.
 
-**You SHOULD set `best_for`/`auto_pick` on every gallery/header/footer/products/categories variant** so qee selects well for every vendor bucket, not just the manifest default. **You SHOULD set `min_images` on every multi-slide gallery variant** (mosaics, filmstrips, collages). **You SHOULD set `auto_pick: false`** on any variant that is special-purpose rather than a general-audience default (review walls, decorative-only galleries, focused/checkout headers).
+**You SHOULD set `best_for`/`auto_pick` on every gallery/header/footer/products/categories variant** so Queek's AI selects well for every vendor bucket, not just the manifest default. **You SHOULD set `min_images` on every multi-slide gallery variant** (mosaics, filmstrips, collages). **You SHOULD set `auto_pick: false`** on any variant that is special-purpose rather than a general-audience default (review walls, decorative-only galleries, focused/checkout headers).
 
-A compliance test (`tests/theme-metadata.test.ts`) enforces the shape of these fields for every variant in every theme — `best_for` values must be valid bucket keys, `auto_pick` must be a boolean, `min_images` must be a positive integer and gallery-only. It will NOT tell you if a value is a poor creative fit — that's a design judgment call.
+`npm run check` enforces the shape of these fields for every variant (`theme/selection-metadata`) — `best_for` values must be valid bucket keys, `auto_pick` must be a boolean, `min_images` must be a positive integer. It will NOT tell you if a value is a poor creative fit — that's a design judgment call.
 
 ---
 
@@ -833,12 +741,12 @@ Must mirror the vendor bootstrap shape. Required minimums:
 
 A theme can ship more than one demo store. Each store is a **design**. `demo.json` is
 the main one (id `default`): the thumbnail, the section-library capture and the
-registry's top-level compositions come from it. Each extra design is a file under
+theme's top-level compositions come from it. Each extra design is a file under
 `demos/` in the same shape, declared in `theme.config.ts` with the **template** (the
 business) it belongs to:
 
 ```
-themes/roast/
+theme/
   demo.json              # the main design: a coffee roastery (template coffee)
   demos/
     foods.json           # design 1 of the foods template: a restaurant & takeaway
@@ -879,28 +787,21 @@ the main template). The others follow in `demos[]` order. `label` and `for` are 
 template's, declared once on design 1; a later design declares only `id`, `template`,
 `design_label` and `description` — it inherits `label` and `for` from design 1.
 
-Every design previews at its own URL, and every link inside it stays on that design:
+Once published, every design previews at its own URL under the theme's slug, and every link inside it stays on that design:
 
 | URL | shows |
 |---|---|
-| `preview.<domain>/roast` | the **template gallery** (a theme with 2+ templates) |
-| `preview.<domain>/roast~coffee` | the main design, `demo.json` (the main template's key) |
-| `preview.<domain>/roast~foods`, `/roast~foods/shop` | design 1 of the foods template |
-| `preview.<domain>/roast~foods-2` | design 2 of the foods template |
-| `preview.<domain>/allure` | the store of a single-template theme (no gallery) |
+| `/my-theme` | the **template gallery** (a theme with 2+ templates) |
+| `/my-theme~coffee` | the main design, `demo.json` (the main template's key) |
+| `/my-theme~foods`, `/my-theme~foods/shop` | design 1 of the foods template |
+| `/my-theme~foods-2` | design 2 of the foods template |
+| `/my-theme` | the store of a single-template theme (no gallery) |
 
-The registry publishes each design as a `demos[]` entry with its own `preview_url`,
-`home_composition`, `page_compositions` and `variant_images`.
+Queek publishes each design with its own preview URL, home composition, page
+compositions and variant images.
 
-A deployment can serve this same preview on its own hostname: set
-`THEME_PREVIEW_HOSTS` to a comma-separated list of exact hosts or one `*` in the
-first label only (e.g. `preview-queek-storefront-*.sslip.io`). Production leaves
-it unset and only `preview.<domain>` previews. Set
-`THEME_STORE_PREVIEW_ORIGIN=https://<that host>` too if the theme store's Preview
-buttons should open it.
-
-What the checker asks of a store, primary or not: the minimums above, Queek-hosted
-art (`--fix` rehosts every file), block types core renders, `profile.slug` and
+What the checker asks of a store, primary or not: the minimums above, art Queek can
+host (it rehosts every file on submission), block types core renders, `profile.slug` and
 `config.theme` naming this theme, `products[].shop_id` equal to `profile.id`, and a
 `profile.id` no other store in the theme uses — the cart is keyed by it, so two
 stores on one id would share a cart in the preview. Only the primary is required to
@@ -910,20 +811,19 @@ variant.
 
 ## Templates
 
-**Theme → template → design** (contract R2.8). The **theme** is the look. A
-**template** is a business the theme is dressed as (medley's Food, Hair). A **design**
+**Theme → template → design.** The **theme** is the look. A
+**template** is a business the theme is dressed as (Food, Hair). A **design**
 is one concrete store of a template, one demo file: `food` and `food-2` are the Food
-template's two designs. "Version" and "preset" are not words we use.
+template's two designs. "Version" and "preset" are not words Queek uses.
 
-A merchant (or Qee, the AI, on their behalf) picks ONE design, and the backend builds
+A merchant (or Queek's AI, on their behalf) picks ONE design, and Queek builds
 the vendor's store from its layout — its sections and variants, its header and
 footer, its dials and each section's `style` — then fills every content slot with the
 vendor's own material. The preview at `/<slug>~<id>` is what the vendor gets, content
 aside. A theme ships one template per business it serves, and up to three designs of
-each. The backend publishes exactly what this section describes; it is agreed with
-the backend team and changes only together with it.
+each.
 
-What each design must carry (theme-check rejects a gap):
+What each design must carry (`npm run check` rejects a gap):
 
 - **`description`** (`theme/template-description`) — ≤ 300 characters, written
   for a model choosing on a merchant's behalf: who it fits · the look · the
@@ -936,25 +836,20 @@ What each design must carry (theme-check rejects a gap):
 
 - **A screenshot** (`theme/template-screenshot`) — `theme.jpg` (or `.png`) for the
   main design, `demos/<id>.jpg` for the rest, 1280×800, the design's first screen,
-  captured by `yarn theme:capture <slug>` at the design's own URL (see
-  [theme.png](#themepng)). The AI looks at it before committing.
-  `yarn theme:rehost-images --theme <slug>` (also run by `yarn theme:check <slug> --fix`)
-  uploads it to `media.usequeek.com/theme-assets/<slug>/<sha256[..16]>.jpg` and records
-  it in the theme's `screenshots.json`; the registry publishes that absolute URL as
-  `preview_image`, and the `public/` copy as `screenshot` for this storefront's own
-  pages. Re-capture a screenshot and it must be uploaded again — the URL is its
-  content hash.
+  captured by `npm run screenshot` at the design's own URL (see
+  [theme.png](#themepng)). The AI looks at it before committing. Queek uploads it to
+  its CDN when you submit, and publishes that URL as the design's preview image.
+  Re-capture a screenshot after a design changes.
 - **`for`** (`theme/template-business`) — the business the template is for, in the
-  platform's vocabulary only (`lib/storefront/business-vocabulary.json`): service
+  platform's vocabulary only (`docs/business-vocabulary.json`): service
   slugs a vendor registers as (`foods`, `beauty-cosmetics`…) and the marketplace
   catalogue's roots and branches (`beauty-personal-care` → `makeup`,
   `wigs-extensions-hair-accessories`…). The catalogue keys are
-  what tell a wig seller from a makeup seller; the backend reads a vendor's business
+  what tell a wig seller from a makeup seller; Queek reads a vendor's business
   from what they sell and ranks a specific match above a broad one. The main
-  template's goes in `default_demo: { for }` and names **its own** business — it used
-  to inherit the theme's `categories`, so a food vendor was offered medley's beauty store.
-  Every design of a template has the same `for`.
-  **General or niche** (contract R2.7): the backend matches a store first by the
+  template's goes in `default_demo: { for }` and names **its own** business, not
+  the theme's `categories`. Every design of a template has the same `for`.
+  **General or niche:** Queek matches a store first by the
   business category the merchant picked at setup (the service slugs), and by product
   categories only as the fallback and the niche signal. A **general** template (a
   business as a whole: clothes, food, beauty) **leads with** its business category
@@ -972,7 +867,7 @@ What each design must carry (theme-check rejects a gap):
   unique within the template and true of any store (the same copy rules as below:
   `Neighbourhood buka`, never `Lekki buka` or `Mama Tee's buka`).
 - **Chrome the theme implements** (`theme/template-chrome`) — `config.header.variant`
-  and `config.footer.variant` name variants the theme declares. The registry
+  and `config.footer.variant` name variants the theme declares. Queek
   publishes them as `header_variant` / `footer_variant`.
 - **Style keys the variant declares** (`theme/template-style`) — a section's
   presentational fields (enum, boolean and colour fields: a tone, an alignment,
@@ -980,14 +875,13 @@ What each design must carry (theme-check rejects a gap):
   section's own variant does not declare is rejected: it would be copied onto
   every store built from the template and do nothing.
 
-The R2.8 checks (explicit `template` on every design, one `for` per template,
+The design checks (explicit `template` on every design, one `for` per template,
 `design_label` for 2+ designs, at most three designs per template, keys and ids in one
-namespace) are `theme/template-designs` (`@usequeek/theme-check` 0.4.0). `theme/template-versions`
-keeps its id but only checks a design's home composition now; grouping designs by an
-id's `-2` suffix is gone — a design is grouped by the explicit `template` it declares,
-exactly as the resolver (`lib/storefront/utils/theme-designs.ts`) and the registry group it.
+namespace) are `theme/template-designs`. `theme/template-versions` checks that no two
+designs share a home composition. A design is grouped by the explicit `template` it
+declares, never by an id's `-2` suffix.
 
-What the registry publishes per design (`demos[]` in `/api/theme-registry`):
+What Queek publishes per design:
 `id, template, template_label, design_index, design_label, label, for, description,
 preview_url, preview_image, screenshot, header_variant, footer_variant, tokens`,
 plus `home_composition` / `page_compositions` whose slots are
@@ -1001,18 +895,18 @@ plus `home_composition` / `page_compositions` whose slots are
   template, design 1 included (`Restaurant & kitchen — Dining room`,
   `Restaurant & kitchen — Neighbourhood buka`), so two cards never read alike.
 - `for` — the template's, identical on each of its designs.
-- `preview_url` — the design's own URL: `/medley~food-2`; `/medley~beauty` for the
-  main design of a theme with a gallery; `/allure` for a single-template theme.
+- `preview_url` — the design's own URL: `/my-theme~food-2`; `/my-theme~beauty` for the
+  main design of a theme with a gallery; `/my-theme` for a single-template theme.
 - Theme level: `preview_url` is the main design's URL (it matches `preview_image`,
   `theme.jpg`), and `gallery_url` is `/<slug>` for a theme with 2+ templates, else `null`.
 
 `copy` is the section's words — its declared text fields and the
 text keys of its list entries (steps, slides, FAQ), never links, images, alt text,
 ids, prices or the demo store's own facts (email, phone, address, hours, coupon
-code); the backend builds a section with no vendor facts behind it from them and
-qee rewrites them. A section still carrying template copy stays hidden from a
-real store's shoppers until it is rewritten in the store's own words (backend,
-BE32), so demo copy may persuade: how things are made, the services, the story
+code); Queek builds a section with no vendor facts behind it from them and its
+AI rewrites them. A section still carrying template copy stays hidden from a
+real store's shoppers until it is rewritten in the store's own words, so demo
+copy may persuade: how things are made, the services, the story
 and the claims are the demo's to tell ("Filled by hand", "Book a *fitting*").
 What must not carry over is the demo store's identity: **no store name** (say
 "our kitchen", "the studio"), **no place** ("across the city", or drop it), **no
@@ -1020,14 +914,14 @@ naira amount and no promise only the vendor can make** (delivery windows, return
 periods, free delivery, guarantees), **no opening hours or schedules**, and **no
 founding date** ("since 2014") or email and phone number in the words.
 Testimonials and reviews are exempt: their copy never reaches a real store.
-Manifest notes and their quoted examples are different: qee writes fields from
+Manifest notes and their quoted examples are different: Queek's AI writes fields from
 them directly and they are never hidden, so they carry no claim, service,
-turnaround or offer either. `theme/template-copy` rejects the rest (contract R2.6).
+turnaround or offer either. `theme/template-copy` rejects the rest.
 `tokens` is the store's `config.tokens` — always the dials (sizes, weights,
 spacing, radius, motion); the colours and faces only when the theme's CSS reads
 the kit's colour/face vars (`--brand-*`, `--font-heading`/`--font-body`). A theme
-that hard-codes its palette (roast, glow, carat) varies designs by layout,
-chrome, dials and section `style`.
+that hard-codes its palette varies designs by layout, chrome, dials and
+section `style`.
 
 Rules for template authors:
 
@@ -1035,11 +929,11 @@ Rules for template authors:
   template per business the theme serves (`food`, `hair`, `clothes`…), each with
   that business's own sections (a priced menu, table booking, a size guide, install
   steps). The vendor's business picks the template through `for`; the merchant or
-  qee picks the theme. **Never rename a shipped id or key**: vendors store the design
+  Queek's AI picks the theme. **Never rename a shipped id or key**: vendors store the design
   id they picked (`foods` stays `foods`), and old links redirect by the key.
 - **Designs** (`theme/template-designs`): up to three designs of one template —
   `{ id: 'food' }`, `{ id: 'food-2', template: 'food' }`, `{ id: 'food-3', template: 'food' }` —
-  with exactly the same `for`; the backend spreads matching vendors across them. The id
+  with exactly the same `for`; Queek spreads matching vendors across them. The id
   of a later design is any unused slug (`<key>-2` by habit): the grouping is the
   explicit `template`, never the suffix. Each has its own `design_label` saying what
   differs, its own description and screenshot, and is a different design, not a
@@ -1049,13 +943,13 @@ Rules for template authors:
 - **Designed pages** (`theme/template-pages`): every design ships `about`, `sales`
   and `landing` pages (page versions `about-2`…`-5`, `sales-2`/`-3`, `landing-2`/`-3`
   optional: the `-N` suffix still means something for page slugs), each previewable at
-  `/<slug>~<id>/<page>`. Qee clones the page for a
+  `/<slug>~<id>/<page>`. Queek's AI clones the page for a
   vendor and fills it. On `sales` and `landing` every products section receives the
   products the merchant names — a single-product section (`featured`/`spotlight`) one
   each, in order, a list all of them — and the first hero is dressed with their
   photos. So design them for 1–3 products: a products section in the first three,
   closing on a contact card (both warned). `about` versions differ in story shape
-  (founder story, team or kitchen, values and process, timeline, press); every
+  (how it started, team or kitchen, values and process, timeline, press); every
   section must be fillable from a vendor's real facts or photos, or it is dropped.
   The single-page default theme is exempt: every URL draws its one page.
 - **Design for a thin vendor.** Slots the vendor has no data for are dropped
@@ -1069,40 +963,32 @@ Rules for template authors:
 
 - **The gallery.** `/<slug>` is the template gallery: one card per template (design
   1's screenshot, the template label, design 1's description, how many designs), each
-  linking to `/<slug>~<key>`. It is core preview chrome
-  (`app/preview/_components/template-gallery.tsx`), never a theme component: no theme
-  CSS, header or footer. The preview host's root is the default theme's gallery. A
-  single-template theme keeps `/<slug>` as its store.
+  linking to `/<slug>~<key>`. It is Queek's own preview page, never a theme component:
+  no theme CSS, header or footer. A single-template theme keeps `/<slug>` as its store.
 - **The redirect.** The main store lives at `/<slug>~<main key>`, so an old link to
   `/<slug>/<page>` (sent in chats, saved in the dashboard) is a **308** there, query
-  kept, answered by `proxy.ts` before anything renders
-  (`lib/storefront/utils/preview-routing.ts`). Not moved: `/<slug>` itself, any `~`
+  kept, answered before anything renders. Not moved: `/<slug>` itself, any `~`
   segment, single-template and unknown themes, a last segment with a dot.
 - **All templates link and Designs dropdown.** The gallery `/<slug>` is the only page
-  that lists a theme's templates; a template's store never lists the other templates
-  (founder, R2.8). Every store of a gallery theme gets one **All templates** link at
+  that lists a theme's templates; a template's store never lists the other templates.
+  Every store of a gallery theme gets one **All templates** link at
   the end of the header menu, back to the gallery. A store whose template has two or
   more designs also gets a **Designs** item listing that template's designs by
-  `design_label`, the one on screen marked `✓` (`app/preview/_lib/templates-menu.ts`).
+  `design_label`, the one on screen marked `✓`.
   Every store, gallery theme or not, also gets a **Style guide** link to its own
   `/<slug>[~<id>]/style-guide` (left out when the demo's menu already links one).
-  All are added at render time, never written into the demo JSON — the backend copies
+  All are added at render time, never written into the demo JSON — Queek copies
   that into real stores — and carry `meta: { preview: true }`, so a theme that hides its
   own menu (the one-page default theme) can still show them. Designs is a `group` item
   with `url` children, so every header variant a design uses must draw a menu item's
-  children (a dropdown on desktop, indented under it in the mobile menu).
-  `tests/theme-templates-menu.test.tsx` renders each design's own header, fails if the
-  gallery link or a design link is missing, and fails if a store links another
-  template. The extra items make the menu longer:
-  a header that sets the menu beside a centred logo must give it its own row when it
-  does not fit on one line (medley split, roast centered and carat inline measure it
-  with `useCrowdedNav`), never wrap it under itself or run it into the logo.
+  children (a dropdown on desktop, indented under it in the mobile menu), and each
+  design's own header must render the gallery link and its Designs entries. The extra
+  items make the menu longer: a header that sets the menu beside a centred logo must
+  give it its own row when it does not fit on one line, never wrap it under itself or
+  run it into the logo.
 - **Embed.** When the merchant dashboard frames a preview, the frame shows exactly
   the design the merchant is about to activate: no All templates link and no Designs
-  dropdown. Embed is on with `?embed=1` on the URL (the dashboard sets it),
-  `Sec-Fetch-Dest: iframe` (the browser sends it on every framed page load, so
-  in-frame navigation stays embedded), or the `qk-capture` cookie (screenshots). The
-  gallery requested in embed is a **307** (never cached) to the main design.
+  dropdown. The gallery requested in embed is a **307** (never cached) to the main design.
 
 ### Placeholder content
 
@@ -1117,69 +1003,59 @@ ever submitted:
   description is `theme/template-description`'s).
 
 Every theme's preview must look like itself; shared stand-ins would make every store
-look the same. So a theme scaffolded from the skeleton — by `yarn theme:new` or
-`npm create @usequeek/theme` — fails this rule until its author replaces them: it is
+look the same. So a theme scaffolded from the skeleton with
+`npm create @usequeek/theme` fails this rule until its author replaces them: it is
 the first item on the to-do list, not a fault in the scaffold.
 
 ## theme.png
 
 1280x800 screenshot of the homepage (`theme.jpg` or `theme.png`) — the main
-design's screenshot; see [Templates](#templates). Outside this repo, `npm run screenshot`
-(`queek theme screenshot`) captures every design into these files. In this repo, with `yarn dev` running,
-`yarn theme:capture <slug> [design ids…]` first refreshes `themes/design-index.json`
-(what the preview routes read; commit its diff), then captures every design's first
-screen at its own design URL on `preview.localhost:3001` into `theme.jpg` /
-`demos/<id>.jpg`: the main design at `/<slug>~<main key>`, never `/<slug>`, which is
-the gallery on a theme with 2+ templates. The `qk-capture` cookie leaves the
-preview's All templates link and Designs dropdown out, so the screenshot shows the store as
-a merchant gets it. Then `yarn theme:rehost-images --theme <slug>` uploads them.
+design's screenshot; see [Templates](#templates). `npm run screenshot`
+(`queek theme screenshot [design ids…]`) captures every design's first screen at
+1280×800 into these files: `theme.jpg` for the main design, `demos/<id>.jpg` for the
+rest. Pass design ids to capture only those. Queek uploads the screenshots when you
+submit.
 
 ## Registration
 
-1. Create `themes/<slug>/` with all required files (`yarn theme:new` scaffolds them and does step 2)
-2. Register it in `themes/loaders.ts` — one line in **each** map: `themeLoaders` (the module) and `themeStyles` (its CSS in the server-rendered HTML; without it the store paints unstyled until JS runs)
-3. Run `yarn theme:generate-registry`
-4. Sync to Laravel: `php artisan storefront:sync-themes`
-5. Verify: `preview.localhost:3001/<slug>` renders correctly (the template gallery for 2+ templates; each design at `/<slug>~<id>`)
+A theme is one name, and it has to be the same everywhere: the `slug` in `manifest.ts`
+and `theme.config.ts`, the `.theme-<slug>` root class that `layout.tsx` puts on its
+root element (your whole stylesheet is scoped to it), and `profile.slug` and `config.theme`
+in every demo store. `npm create @usequeek/theme` sets all of them; if you rename a theme
+by hand, change all of them. You register nothing else: Queek registers the theme under
+that slug when you submit it, so there is no loader to edit and no registry step to run.
 
 ## Validation
 
 ```bash
-yarn theme:check <slug>            # what would block this theme from publishing
-yarn theme:check <slug> --json     # same findings, machine-readable
-yarn theme:check <slug> --fix      # apply the fixes that need no decision
-yarn theme:check <slug> --static   # skip the render rules (fast)
-yarn theme:check                   # every theme
+npm run check                            # what would block this theme from publishing
+npx queek theme check --json             # same findings, machine-readable
+npx queek theme check --quiet            # errors only
+npx queek theme check --fail-level warning   # exit 1 on warnings too
 ```
 
 Each finding names the rule, where it is, what is wrong, and what to do:
 
 ```
-✗ theme/price-range-signal  themes/aurora/blocks/products.tsx → products.grid
-    renders a price without honouring pricing.is_price_from
-    → Prefix the price with {product.pricing.is_price_from ? 'From ' : ''} …
-    themes/THEME.md#component-rules
+theme/demo.json
+  error    6 placeholder product(s) and 10 of the starter's photos  theme/placeholder-content
+           Fix: Replace the starter's products and photos with your own for this business. …
+           Docs: https://github.com/usequeek/theme-starter/blob/main/docs/THEME.md#placeholder-content
 ```
 
-**These are the same rules CI runs** (`tests/theme-check.test.ts` asserts over the
-published `@usequeek/theme-check` library, plus three storefront-only rules in
-`scripts/theme-check/`). There is no second definition of
+**These are the rules Queek runs when you submit**, except the few that need
+Queek's side; the report lists them at the end. There is no second definition of
 "valid" to pass locally and fail on submission.
 
 **A theme publishes only when every blocking finding is clear** — no partial
-publish. A variant that does not render is not quietly dropped, because the
-backend composes real stores from your manifest and demo, and a hole there
+publish. A variant that does not render is not quietly dropped, because Queek
+composes real stores from your manifest and demo, and a hole there
 becomes a hole in a vendor's storefront.
 
-`--json` exists for agents: stable `rule` ids, `where`, `found`, `fix`, and a
-`fixable` flag, with a non-zero exit while anything blocks. Point your tooling at
-it and iterate until `ok: true`.
-
-Run `yarn test` too — it covers the framework beyond your theme.
-
-Maintainers: `yarn theme:verify-scaffold` proves `themes/_bare` still scaffolds
-into a publishable theme. It is a command rather than a test because it creates
-and deletes a directory inside `themes/`, which races the suite.
+`--json` exists for agents: each finding carries a stable `rule` id, a `level`,
+`where`, `message`, `fix` and a `fixable` flag, and `summary` counts the errors and
+warnings. The exit code is non-zero while any error blocks. Point your tooling at
+it and iterate until `summary.errors` is 0.
 
 Theme compliance checks include:
 - All required files present (`gallery.tsx`, `products.tsx`, `categories.tsx`, `content-variants.tsx`)
