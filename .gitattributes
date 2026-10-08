@@ -1,0 +1,4 @@
+# Maintenance files that are not part of the theme a developer scaffolds.
+.gitattributes export-ignore
+.public-text-allow export-ignore
+/scripts export-ignore

@@ -1,0 +1,2 @@
+# Intentional exceptions to scripts/check-public-text.mjs: path | rule-id | reason
+docs/THEME.md | rendering-bug | Documents the symptom a developer sees when renderMarkdown output is passed to dangerouslySetInnerHTML.

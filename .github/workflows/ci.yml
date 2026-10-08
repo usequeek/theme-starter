@@ -19,6 +19,10 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
+      # Keeps internal references and secret-shaped strings out of this
+      # repository's text. It runs here only, not in themes scaffolded from it.
+      - if: github.repository == 'usequeek/theme-starter'
+        run: node scripts/check-public-text.mjs && node --test scripts/check-public-text.test.mjs
       # The starter itself ships placeholders on purpose, so an unedited copy
       # cannot be submitted: the template descriptions, the products and photos
       # in its demo stores, and (once create has run) the theme description.
