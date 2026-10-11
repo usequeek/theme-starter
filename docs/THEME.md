@@ -24,7 +24,7 @@ tools, `@usequeek/cli` ([github.com/usequeek/theme-tools](https://github.com/use
 ```bash
 npm create @usequeek/theme@latest my-theme -- --templates laundry --tags minimal
 cd my-theme
-npm run dev       # queek theme dev: every page of every demo store, real Next.js
+npm run dev       # queek theme dev: every page of every demo store, server-rendered
 npm run check     # queek theme check: this document's rules, on your machine
 npm run screenshot # queek theme screenshot: every design's first screen, 1280×800
 npm run package   # queek theme package: a zip for submission
@@ -83,17 +83,19 @@ never fetch, never touch the SDK, never mutate a store — core owns behaviour s
 that every theme gets the same fixes.
 
 **4. Declare your variants in `manifest.ts`.** Each one needs a renderer in
-`index.ts` and exactly the fields its component reads. This is where most
-rejections come from, and the rules explain each one.
+`index.ts` (the `variantImplementations` map) and declares exactly the fields
+its component reads. The check holds the two to each other, so a variant with
+no renderer, or a field nothing reads, is an error (`theme/variant-parity`,
+`theme/field-parity`).
 
 **5. Style from design tokens.** `var(--fs-*)`, `var(--space-*)`,
 `var(--radius-*)`, `var(--image-*)`. A hardcoded size is a dial that does
-nothing in the merchant's editor.
+nothing in the merchant's editor, and `theme.css` must reference the tokens
+more than 50 times (`theme/design-tokens`).
 
-**6. Rewrite `demo.json`.** It looks like filler and is not: it is both what a
-vendor previews before choosing your theme AND what Queek composes real stores
-from. Reference art on any public URL — it gets rehosted when your theme is
-published.
+**6. Rewrite `demo.json`.** It is not filler. A vendor previews it before
+choosing your theme, and Queek composes real stores from it. Reference art on
+any public URL; Queek rehosts it when your theme is published.
 
 **7. Submit.** See [Submitting a theme built outside this repo](#submitting-a-theme-built-outside-this-repo).
 
@@ -110,16 +112,16 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 ## What themes CAN do
 
 - Render any layout (sidebar, split-screen, single-page, multi-page)
-- Style all `.core-*` CSS classes (auth modal, checkout form, cart items, fees)
-- Place `<AuthFlow />`, `<CheckoutController />` anywhere in the layout
+- Style the `.core-*` CSS classes core's components emit (auth, cart, checkout, metafields, blocks)
+- Place `<AuthFlow />` (from `@usequeek/theme-kit/components/auth/auth-flow`) anywhere in the layout, and mount the cart panel through `<CartPanelController>` (`@usequeek/theme-kit/components/cart/cart-panel-controller`), as the starter's `modal-layer.tsx` does
 - Provide `AuthRenderer` to wrap the auth flow in a custom modal/sidebar/inline design
-- Provide shell components (`CartShell`, `LoginShell`, `SignupShell`, `AccountShell`) that receive pre-rendered ReactNode slots and arrange them visually
+- Provide shell components (`CartShell`, `CheckoutShell`, `LoginShell`, `SignupShell`, `AccountShell`) that receive pre-rendered ReactNode slots and arrange them visually
 - Read vendor/config data via `useStorefront()`, `useProducts()`, `useCategories()`
 - Trigger modals via store openers: `useAuthModalStore().open()`, `useCartPanelStore().open()`
 - Use `<Image />` from `@usequeek/theme-kit/components/image` for all images — provides broken-image fallback + Smart Placeholder support (see below)
   - Give product/collection card images `intent="card"`: they are **lazy by default** (a server-rendered grid would otherwise preload and fetch every card image at once, racing the page's CSS). A card that is the page's main image passes `fetchPriority="high"`.
 - Read product photos ONLY from the ONE ordered list: `getHoverImage()` for the card hover swap (the second photo, `null` unless two exist), `getSlideshowImages()` for slideshows/photo counts/tiles, `buildMediaFrames()` for full-page galleries — all from `@usequeek/theme-kit/utils/product-media`. The helpers read the normalized `media.images` list (primary first, as the Queek API returns it on list and detail payloads), so the same card lights up on listing payloads (capped list) and detail payloads (full list) with no per-theme branching.
-- Style framework-owned blocks (divider, embed, video, table, button, image, content/default) via `.theme-<slug> .core-block-*` scoped selectors
+- Style framework-owned blocks via `.theme-<slug> .core-block-*` scoped selectors (see [Framework-Owned Blocks](#framework-owned-blocks))
 
 ## What themes MUST NOT do
 
@@ -128,16 +130,18 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 - Mutate core stores (`setUser`, `clearShopCart`, `setDeliveryMode`, etc.)
 - Re-implement auth flow (phone/OTP/signup logic)
 - Re-implement checkout flow (fees, submit, payment method selection)
-- Import from other themes
+- Import from other themes, from app code (`@/…`), or from a relative path that leaves `theme/` (`theme/core-boundary`)
 - Use raw `<img>` tags — use `<Image />` from `@usequeek/theme-kit/components/image` instead
 - Re-implement framework-owned blocks — these live in `@usequeek/theme-kit/shared-blocks`; themes style them via CSS only (see Framework-Owned Blocks below)
 - Generate variant thumbnails — Queek's build pipeline handles this centrally (see Variant Thumbnails below)
 - Reference a local file from `demo.json` — use a public image URL; Queek rehosts it when your theme is published (see Demo Art Hosting below)
-- Load fonts with `next/font/google` or a `fonts.googleapis.com` `@import` — ship the files in `theme/fonts/` (see Fonts below)
-- Import Next.js (`next`, `next/link`, `next/navigation`, `next/image`, `next/font/*` …). Link and navigate with `import { Link, useRouter, usePathname } from '@usequeek/theme-kit/navigation';`, and use the kit's `<Image />` for images. Queek decides which framework runs the storefront, so only the kit may know it — `theme/core-boundary` rejects any `next` import
-- Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`) or format with the runtime's default locale (`toLocaleDateString()` with no locale) — every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` / `useSyncExternalStore`; pass an explicit locale and `timeZone` to date/number formatting. A throw while server rendering your Layout, header or any page is a **failed request (500)**, not a quiet fallback to the browser — the page is deliberately not wrapped in a Suspense boundary, so a missing product or page can answer a real 404. Every page of every demo store is server-rendered when your theme is checked, which is why demo data must use the real API shapes — a variant is `option_values` / `pricing` / `inventory`, not a `{ Colour: 'Red' }` map
-- Pass `renderMarkdown(…)` to `dangerouslySetInnerHTML` — it returns React elements, not an HTML string, so the page shows "[object Object]". Render the elements as children (`<div className="…">{renderMarkdown(text, basePath)}</div>`) or use `<Markdown>` from `@usequeek/theme-kit/components/markdown`; `theme/markdown-html` rejects it
-- Link a demo store to a page it does not have — missing pages are real 404s. Every menu item, block link and markdown link in `demo.json` and `demos/*.json` must open a page of that store
+- Load fonts from a remote stylesheet or through `next/font/*`: ship the files in `theme/fonts/` (see [Fonts](#fonts))
+- Import Next.js (`next`, `next/link`, `next/navigation`, `next/image`, `next/font/*` …). Link and navigate with `import { Link, useRouter, usePathname } from '@usequeek/theme-kit/navigation';`, and use the kit's `<Image />` for images. Queek decides which framework runs the storefront, so only the kit may know it. `theme/core-boundary` rejects any `next` import
+- Read browser-only state during render (`window`, `document`, `localStorage`, `Date.now()`, `Math.random()`), or format with the runtime's default locale (`toLocaleDateString()` with no locale). Every theme component is **server-rendered**, and the server's HTML must match the browser's first render. Read browser state in `useEffect` or `useSyncExternalStore`, and pass an explicit locale and `timeZone` to date and number formatting.
+  - A throw while server rendering your `Layout`, header or any page is a **failed request (500)**, not a quiet fallback to the browser. The page is deliberately not wrapped in a Suspense boundary, so a missing product or page can answer a real 404.
+  - Every page of every demo store is server-rendered when your theme is checked, so demo data must use the real API shapes. A variant is `option_values` / `pricing` / `inventory`, not a `{ Colour: 'Red' }` map.
+- Pass `renderMarkdown(…)` to `dangerouslySetInnerHTML`. It returns React elements, not an HTML string, so the page shows "[object Object]". Render the elements as children (`<div className="…">{renderMarkdown(text, basePath)}</div>`) or use `<Markdown>` from `@usequeek/theme-kit/components/markdown`. `theme/markdown-html` rejects it
+- Link a demo store to a page it does not have: missing pages are real 404s. Every menu item, block link and markdown link in `demo.json` and `demos/*.json` must open a page of that store
 
 ---
 
@@ -151,11 +155,12 @@ half-registered theme can never render holes in a vendor's store. The rules only
 run — divergence from Queek's own themes, the render probe, the art and screenshot
 upload — are listed at the end of `npm run check`'s report.
 
-**Assets.** Build against whatever public image host you like — Queek moves your demo
+**Assets.** Build against whatever public image host you like. Queek moves your demo
 art onto its CDN before it validates, and rewrites `demo.json` to match. You never need
-Queek's storage credentials, and the "no foreign hosts" rule is satisfied by Queek
-rather than by you. A dead or unreachable image fails the submission — it is named, and
-nothing is published.
+Queek's storage credentials, and Queek satisfies the "no foreign hosts" rule for you. A
+dead or unreachable image fails the submission: it is named, and nothing is published.
+Queek records each uploaded screenshot in `theme/screenshots.json`; leave that file as it
+is.
 
 ---
 
@@ -188,40 +193,46 @@ composes real stores from. Replace the art.
 
 ```
 theme/
-  index.ts              # ThemeModule default export
-  manifest.ts           # Theme metadata + variant declarations
-  theme.config.ts       # Author, tags, categories, rank
+  index.ts              # ThemeModule default export (index.tsx also works)
+  manifest.ts           # Theme metadata, variants, tokens, English strings
+  theme.config.ts       # Author, tags, categories, rank, templates and designs
   layout.tsx            # Root wrapper — applies .theme-<slug> class
   header.tsx            # Default header component
   footer.tsx            # Default footer component
   theme.css             # Design tokens + .core-* class styling
-  demo.json             # Preview data — MUST showcase every component (see below)
-  demos/<id>.json       # Optional alternative stores (see Alternative demo stores)
-  theme.jpg             # Screenshot (1280x800); theme.png also works
+  demo.json             # Preview data: the main design (see Homepage Requirement)
+  demos/<id>.json       # Optional alternative designs (see Designs)
+  theme.jpg             # Main design's screenshot, 1280x800; theme.png also works
+  locales/
+    en.default.json     # Every string the theme prints (see Locales)
   blocks/
-    gallery.tsx              # Identity block — hero slideshow/image
-    products.tsx             # Identity block — product grid/carousel
-    categories.tsx           # Identity block — collection browser
-    contact.tsx              # Identity block — store map + contact details
-    content-variants.tsx     # Structured content variants (promo, brand-story, testimonials, marquee, etc.)
+    gallery.tsx         # Identity block: hero slideshow/image
+    products.tsx        # Identity block: product grid/carousel
+    categories.tsx      # Identity block: collection browser
   pages/
     home.tsx  page.tsx  blog.tsx  post.tsx
     collection.tsx  product.tsx  gallery-page.tsx   # product.tsx MUST place <ProductMetafields /> — see Custom data below
-    shop.tsx                     # Shop page — all products with category sidebar + sort/search
+  shells/
+    cart-shell.tsx  login-shell.tsx  signup-shell.tsx  account-shell.tsx
 ```
+
+`theme/structure` rejects a missing file from this list, except the locale file, which the `theme/locale-*` rules enforce. `index.ts` must also supply a
+renderer for every theme-owned block type (`content`, `gallery`, `products`,
+`categories`, `contact`, `blog`): the `ThemeBlocks` type makes the compiler enforce it.
+The starter shows the minimum.
 
 ### Optional files
 
 ```
-  shells/                        # Layout wrappers receiving ReactNode slots
-    cart-shell.tsx               # Props: CartShellProps (items, summary, actions, empty)
-    login-shell.tsx              # Props: LoginShellProps (children)
-    signup-shell.tsx             # Props: SignupShellProps (children)
-    account-shell.tsx            # Props: AccountShellProps (children)
-  components/
-    modal-layer.tsx              # Theme-level modals (product, search, orders)
+  pages/shop.tsx                 # The /shop page (see Shop Page); core renders its own when absent
+  pages/collections.tsx          # The collections index; core renders its own when absent
+  blocks/contact.tsx             # Contact block: store details and a map
+  blocks/content-variants.tsx    # Structured content variants (promo, brand-story, testimonials, marquee…)
+  shells/checkout-shell.tsx      # Props: CheckoutShellProps; core supplies a default
+  modal-layer.tsx                # Theme-level modals (cart panel, search, product, orders)
   headers/                       # Header variants (if manifest declares them)
   footers/                       # Footer variants
+  fonts/                         # Font files and fonts.css (see Fonts)
 ```
 
 ---
@@ -236,12 +247,12 @@ at build time (`theme/module-contract`).
 
 | Slot | Required | What it is |
 |---|---|---|
-| `Layout`, `Header`, `Footer` | yes | The page frame; `Layout` puts the `.theme-<slug>` class on its root |
+| `Layout`, `Header`, `Footer` | yes | The page frame; `Layout` puts the `.theme-<slug>` class on its root. `Header` and `Footer` are the default chrome; variants come through `getHeader` and `getFooter` |
 | `getHeader(variant?)`, `getFooter(variant?)` | yes | Return the component for a manifest variant |
-| `blocks`, `getBlock(type, variant?)` | yes | The page-builder blocks and their variants |
+| `blocks`, `getBlock(type, variant?)` | yes | The page-builder blocks and their variants. `blocks` is the older slot; the type still requires it, so fill it as the starter does |
 | `pages.Home`, `Page`, `Blog`, `Post`, `Collection`, `Product`, `Gallery` | yes | Every page a store can open; `Product` places core's `<ProductMetafields />` |
 | `pages.Shop`, `Collections`, `Policies`, `Metaobject` | no | Core renders its own when absent |
-| `shells` (`CartShell`, `CheckoutShell`, `LoginShell`, `SignupShell`, `AccountShell`) | no | Your frame around core's flows; core supplies defaults |
+| `shells` (`CartShell`, `CheckoutShell`, `LoginShell`, `SignupShell`, `AccountShell`) | no in the type | Your frame around core's flows. `theme/structure` still requires the four files `cart-shell`, `login-shell`, `signup-shell` and `account-shell`; core supplies the checkout default |
 | `productCard`, `ModalLayer`, `AuthRenderer` | no | Optional overrides |
 | `manifest` | yes | Variants and metadata (see [Manifest](#manifest)) |
 
@@ -249,8 +260,8 @@ at build time (`theme/module-contract`).
 
 - **The logo is a link home:** `<Link href={`/${vendor.slug}`}>` from `@usequeek/theme-kit/navigation`, never a `<button>`. A button can't be crawled, opened in a new tab or middle-clicked (`theme/code-quality`).
 - **Menu links come from `menuItemToHref()`** (`@usequeek/theme-kit/utils/menu-link`). It resolves the vendor's own domain, subdomain or path; a hand-built URL breaks on at least one of them (`theme/code-quality`).
-- **A component that uses hooks starts with `'use client'`** (`theme/code-quality`).
-- **A vendor's facts never fall back to your words:** tagline, address, phone, email and description render nothing when they are empty (`vendor.phone ?? ''`, or leave the element out). A store with no phone number must not show the demo's (`theme/vendor-facts`).
+- **A component that uses hooks starts with `'use client'`.** The check enforces it on `header.tsx` and the `gallery`, `products` and `categories` blocks (`theme/code-quality`).
+- **A vendor's facts never fall back to your words.** Tagline, address, phone, email and description render nothing when they are empty (`vendor.phone ?? ''`, or leave the element out). A store with no phone number must not show the demo's (`theme/vendor-facts`).
 
 ## Attribution
 
@@ -259,16 +270,20 @@ Every footer variant renders core's `<PoweredByQueek />` from
 Style it through its `core-powered-by` classes; never re-implement its markup
 (`theme/footer-shows-powered-by`).
 
-## Shop Page (REQUIRED — `pages/shop.tsx`)
+## Shop Page (`pages/shop.tsx`)
 
-The `/shop` page is a **required** part of every theme. It is the vendor's full product catalogue — browseable, filterable, and sortable. It is **not** the same as `/collections` (which shows collection tiles). Collections appear here as **sidebar filters**.
+`/shop` is the vendor's full product catalogue: browseable, filterable and sortable. It is
+**not** `/collections`, which shows collection tiles. Collections appear on `/shop` as
+**sidebar filters**. `pages.Shop` is optional in the contract and core renders a default
+when it is absent, but a theme that wants its own design for the catalogue provides it, and
+every hero CTA, "View all" button and menu link to the catalogue should point at `/shop`.
 
 ### Props contract (`ShopPageProps`)
 
 ```ts
 interface ShopCategory {
-  id: string;        // UUID — pass this as categoryId to useShop()
-  slug: string;
+  id: string;        // UUID
+  slug: string;      // pass this as categorySlug to useShop()
   name: string;
   image?: string | null;
   products_count?: number;
@@ -276,14 +291,14 @@ interface ShopCategory {
 }
 
 interface ShopPageProps {
-  categories: ShopCategory[];  // SSR-loaded; may be empty if vendor has none
+  categories: ShopCategory[];  // SSR-loaded; may be empty if the vendor has none
 }
 ```
 
 ### Products hook (`useShop`)
 
 Import from `@usequeek/theme-kit/hooks/use-shop`, and read the filters from the URL with
-`useShopParams` so they survive refresh and are shareable.
+`useShopParams` so they survive a refresh and can be shared.
 
 ```ts
 import { useShop } from '@usequeek/theme-kit/hooks/use-shop';
@@ -295,37 +310,41 @@ const { products, isLoading, pagination } = useShop({
   keyword,        // string — ?q=
   sort,           // 'latest' | 'popular' | 'price_low' | 'price_high' — ?sort=
   page,           // ?page=
-  perPage: 24,    // keep 24 (see below)
+  perPage: 24,    // the default; keep it (see below)
 });
-// pagination: { currentPage, lastPage, perPage, total, from, to, hasMore }
+// pagination: { currentPage, perPage, hasMore }
 ```
 
+`useShop` returns the one page you ask for, not an accumulated list. The products API sends
+no totals, so `pagination` has no page count or total: use `hasMore` to enable a "Next"
+control, and do not print "page 2 of 9".
+
+`setCategory` and `setKeyword` reset the page to 1, and each clears the other filter.
+`setSort` resets the page to 1.
+
 **The first page is server-rendered.** On a live store, `/shop` fetches the page your
-`useShop` call will ask for — this URL's filters, read exactly as `useShopParams` reads them,
-at `perPage: 24` — and hands it to `useShop`, so the product grid is in the HTML instead of
-appearing after the JS has run and fetched it. Only an exact match is used: a call with other filters or
-another page size just fetches in the browser, as it always has. Filtering and paging after load fetch
+`useShop` call will ask for (this URL's filters, read exactly as `useShopParams` reads them,
+at `perPage: 24`) and hands it to `useShop`, so the product grid is in the HTML instead of
+appearing after the JavaScript has run. Only an exact match is used: a call with other
+filters or another page size fetches in the browser. Filtering and paging after load fetch
 in the browser too. Preview (demo stores) filters the demo catalogue in memory.
 
-### Backend endpoint (for reference — do NOT call directly)
+You never call the products API yourself. The hook hands you `products` and `pagination`.
 
-`useShop` is backed by Queek's products API, which returns paginated product objects with
-the same shape as collection products. You never call it yourself: the hook hands you
-`products` and `pagination`, and `pagination.hasMore` tells you whether to offer "Load more".
+### Design guidance
 
-### Design requirements
+None of this is machine-checked, and all of it is what a vendor expects of a catalogue page.
 
-- **Left sidebar** (on desktop): category tree with nested children. Selecting a category filters products by that category UUID. "All Products" clears the filter.
-- **Keyword search bar**: a controlled input + submit (or debounced). Clears category filter.
-- **Sort selector**: at minimum Latest, Popular, Price Low→High, Price High→Low.
-- **Product grid**: responsive, at least 2 cols on mobile, 4 on desktop. Reuse your theme's product card component.
-- **Pagination**: "Load more" button — call `loadMore()` and append. Show spinner while loading.
-- **Mobile**: sidebar collapses to a drawer or horizontal scroll pill list at the top.
-- **Empty state**: a well-designed empty message when no products match.
-- **Loading skeleton**: show product card skeletons while the initial fetch runs.
-- **CTAs to /shop**: Hero CTAs, "View All" buttons, and navigation links should use `/shop` — NOT `/collections`. `/collections` is for the collections index page only.
+- **Category filter:** a tree with nested children, as a left sidebar on desktop. "All products" calls `setCategory(null)`.
+- **Keyword search:** a controlled input with submit, or a debounced one. It clears the category filter.
+- **Sort selector:** at least Latest, Popular, Price low to high and Price high to low.
+- **Product grid:** responsive, with at least 2 columns on mobile and 4 on desktop. Reuse your theme's product card.
+- **Pagination:** Previous and Next controls that call `setPage(page - 1)` and `setPage(page + 1)`; `hasMore` enables Next. Show a loading state while `isLoading` is true.
+- **Mobile:** the sidebar collapses to a drawer or a horizontally scrolling row of pills at the top.
+- **Empty state:** a clear message when no products match.
+- **Loading skeleton:** product card skeletons while the first fetch runs.
 
-### `/shop` vs `/collections` — rule of thumb
+### `/shop` vs `/collections`
 
 | URL | Purpose |
 |---|---|
@@ -335,30 +354,43 @@ the same shape as collection products. You never call it yourself: the hook hand
 
 ---
 
-## Homepage Requirement (MANDATORY)
+<a id="homepage-requirement-mandatory"></a>
 
-**Every theme's `demo.json` homepage MUST use ALL available component types extensively.** This is not optional — it is a hard requirement for theme submission.
+## Homepage Requirement
 
-The homepage defined in `demo.json` must include sections using each of the following:
+The demo homepage is what a vendor sees when previewing your theme, and what Queek's
+automated capture uses for the Section Library thumbnails. A variant the homepage never
+shows is one a vendor is offered but has never seen.
 
-| Section type | Required on homepage | Purpose |
-|---|---|---|
-| `gallery` | YES — hero position (first section) | Hero slideshow / editorial banner |
-| `products` | YES — at least 2 instances | Product grid + product carousel (show both layouts) |
-| `categories` | YES — at least 1 instance | Collection browser |
-| `content` (default) | YES — at least 1 instance | Rich text / markdown section |
-| `content` (promo) | YES | Promo banner with CTA |
-| `content` (brand-story) | YES | Brand story with image |
-| `content` (testimonials) | RECOMMENDED | Customer quotes |
-| `content` (marquee) | RECOMMENDED | Scrolling announcement |
-| `button` | YES — at least 1 instance | CTA link (framework-owned, auto-styled) |
-| `divider` | YES — at least 1 instance | Visual separator (framework-owned) |
-| `table` | RECOMMENDED | Specs or pricing table (framework-owned) |
-| `video` | RECOMMENDED | Video embed (framework-owned) |
+**What the check enforces:**
 
-**Why this matters:** The homepage is what vendors see when previewing a theme. It's also what Queek's automated capture uses to generate Section Library thumbnails. If a component type is missing from the homepage, vendors won't see what it looks like in your theme before using it.
+- Every variant you declare is shown at least once in `demo.json`, on the homepage or any
+  other page (`theme/demo-completeness`). This covers every scope except `header`, `footer`
+  and `subscribe` (only one renders per page), and any variant marked `auto_pick: false`.
+  An alternative design that skips one gets a warning, not an error.
+- Every section is a block type core renders (`theme/demo-block-types`).
+- Every section names a variant your theme declares (`theme/composition-variants`).
 
-**Minimum section count:** 8+ sections on the homepage. A sparse homepage does not sell the theme.
+**What makes a strong demo** (advice, not checked): a homepage of 8 or more sections that
+opens on a `gallery` hero and uses each section type your theme offers.
+
+| Section type | Purpose |
+|---|---|
+| `gallery` | Hero slideshow or editorial banner, first section |
+| `products` | A grid and a carousel, to show both layouts |
+| `categories` | Collection browser |
+| `content` (default) | Rich text / markdown section |
+| `content` (promo) | Promo banner with a call to action |
+| `content` (brand-story) | Story with an image |
+| `content` (testimonials) | Customer quotes |
+| `content` (marquee) | Scrolling announcement |
+| `button` | Call-to-action link (framework-owned, auto-styled) |
+| `divider` | Visual separator (framework-owned) |
+| `table` | Specs or comparison table (framework-owned) |
+| `video` | Video embed (framework-owned) |
+
+A sparse homepage does not sell the theme, and a variant missing from it has no art in the
+Section Library.
 
 ### demo.json homepage content structure
 
@@ -372,10 +404,10 @@ The homepage defined in `demo.json` must include sections using each of the foll
       "editor_mode": "sections",
       "content": [
         { "type": "gallery", "variant": "your-default-hero-variant", "data": { "images": [...] } },
-        { "type": "content", "variant": "marquee", "data": { "items": ["Free delivery", "New arrivals"] } },
+        { "type": "content", "variant": "marquee", "data": { "items": ["New arrivals", "Customer favourites"] } },
         { "type": "categories", "variant": "your-default", "data": { "title": "Shop by Collection", "limit": 6 } },
         { "type": "products", "variant": "grid", "data": { "title": "Best Sellers", "sort": "popular", "limit": 8 } },
-        { "type": "content", "variant": "promo", "data": { "title": "Summer Sale", "subtitle": "Up to 50% off", "cta_label": "Shop Now", "cta_link": "/shop" } },
+        { "type": "content", "variant": "promo", "data": { "title": "The seasonal edit", "subtitle": "Our latest picks, together", "cta_label": "Shop now", "cta_link": "/shop" } },
         { "type": "products", "variant": "carousel", "data": { "title": "New Arrivals", "sort": "latest", "limit": 6 } },
         { "type": "content", "variant": "brand-story", "data": { "heading": "Our Story", "body": "...", "image": "...", "align": "left" } },
         { "type": "divider", "data": { "style": "line" } },
@@ -387,9 +419,12 @@ The homepage defined in `demo.json` must include sections using each of the foll
 }
 ```
 
-Every variant you declare in `manifest.ts` should appear at least once on the homepage. If your theme declares `gallery: [slider, mosaic]`, the homepage should have BOTH a slider gallery AND a mosaic gallery section.
+Demo copy is template copy: write it so it is true of any store in the business and passes
+`theme/template-copy` (see [Templates](#templates)). The example above names no store,
+place, price, offer or promise for that reason.
 
-**This is enforced.** `npm run check` fails (`theme/demo-completeness`) if any `gallery`/`products`/`categories`/`content` variant that is auto-pickable (i.e. not `auto_pick: false` — see Selection Metadata below) is missing from `demo.json` (home composition and/or any page). `header`/`footer` are exempt (only one renders per page); `auto_pick: false` variants are exempt (legitimately never auto-shown).
+Every variant you declare in `manifest.ts` should appear at least once. If your theme
+declares `gallery: [slider, mosaic]`, show both a slider and a mosaic gallery section.
 
 ### Demo Art Hosting (MANDATORY)
 
@@ -405,7 +440,11 @@ is a file that exists only on your machine.
 
 You do not upload anything yourself. Pick whatever art you like while designing, and
 reference it by public URL. When you submit, Queek uploads every image to its CDN and
-rewrites `demo.json` to point at the copies.
+rewrites `demo.json` to point at the copies. `npm run check` does not flag a foreign
+host; the submission run does (`theme/demo-art-hosting`).
+
+Use photography you have the right to publish: your own, or from a source whose licence
+allows commercial use. Never another store's or a brand's.
 
 Notes:
 
@@ -426,12 +465,14 @@ is the count the store builder gets.
 The following block types are owned by the framework. Their React components live in `@usequeek/theme-kit/shared-blocks` and render identical DOM across every theme:
 
 - **divider** — visual separator
-- **embed** — Instagram/Spotify/YouTube/custom iframe URLs
-- **video** — YouTube/Vimeo/direct video file
+- **embed**: an iframe for any embeddable URL
+- **video**: a YouTube or Vimeo link, or a direct video file
 - **table** — pricing, specs, comparison tables
 - **button** — standalone call-to-action link
 - **image** — single image with optional caption
 - **content/default** — plain markdown rendering
+- **reviews**, **faq**, **callout**, **quote**, **product_qa**: customer reviews, questions and answers, and highlighted text
+- **metaobjects**: entries of the vendor's custom content types (see Custom data below)
 
 Themes **style** these blocks via `.theme-<slug> .core-block-*` scoped selectors in `theme.css`:
 
@@ -454,14 +495,18 @@ Themes **style** these blocks via `.theme-<slug> .core-block-*` scoped selectors
 }
 ```
 
-Theme authors **cannot** override the React logic. This guarantees consistency.
+You cannot override their React logic. That is what keeps them consistent across themes.
 
-Class-name vocabulary:
+Class-name vocabulary for the blocks you will style most (the others follow the same
+`.core-block-<type>__<part>` pattern; read the kit's `shared-blocks/core-blocks.css` for
+the full list):
 ```
 .core-block                         /* shared container */
-.core-block-divider                 .core-block-divider__line
+.core-block-divider                 .core-block-divider--line   .core-block-divider--space
+.core-block-divider__line
 .core-block-embed                   .core-block-embed__wrap   .core-block-embed__frame
 .core-block-video                   .core-block-video__wrap   .core-block-video__frame
+.core-block-video__el
 .core-block-video__placeholder      .core-block-embed__placeholder
 .core-block-table                   .core-block-table__wrap   .core-block-table__table
 .core-block-table__head   .core-block-table__th   .core-block-table__body
@@ -519,25 +564,27 @@ are resolved server-side — block data always reaches a theme as literals.
 
 ## Fonts
 
-A theme's fonts ship **as files inside the theme** — `theme/fonts/` — never
-fetched from Google, at build time or on page load. `npm run check` enforces it
+A theme's fonts ship **as files inside the theme** (`theme/fonts/`), never fetched from a
+font service at build time or on page load. `npm run check` enforces it
 (`theme/fonts-self-hosted`).
 
-- **`next/font/google` is rejected.** It downloads the fonts during `next build`, and
-  Google intermittently answers with `fonts.gstatic.com/l/font?kit=…&skey=…` URLs that
-  Turbopack cannot parse — the build fails with *"next/font/google queries have exactly
-  one entry"* ([vercel/next.js#99114](https://github.com/vercel/next.js/issues/99114)).
-- **A Google Fonts `@import` in your CSS is rejected.** The bundler silently drops it
-  unless it ends up the very first rule of the compiled stylesheet — so a store without a
-  matching brand font never gets the theme's fonts at all — and when it survives, every
-  page waits on a render-blocking request to Google (another origin: DNS + TLS) before any
-  text can paint. If you have one, vendor exactly what Google served: fetch the CSS2 URL
-  with a Chrome user agent, download each `woff2` it names, and keep the rules as they are.
+- **`next/font/google` is rejected.** It downloads the fonts during `next build`. When the
+  font service answers with a URL form the bundler cannot parse, the build fails with
+  *"next/font/google queries have exactly one entry"*. A build that depends on a remote
+  service at build time is not reproducible, so the font files live in the theme instead.
+  Any other `next/font/*` import is rejected too, because a theme never imports Next.js.
+- **A Google Fonts `@import` in your CSS is rejected.** The bundler drops it unless it ends
+  up as the very first rule of the compiled stylesheet, so a store without a matching brand
+  font never gets the theme's fonts at all. When it survives, every page waits on a
+  render-blocking request to another origin (DNS and TLS) before any text can paint. If you
+  have one, vendor what the service served: request the CSS2 URL with a desktop browser
+  user agent, download each `woff2` file it names, and keep its `@font-face` rules as they are.
 
 How to add one:
 
-1. Put the `.woff2` files in `theme/fonts/` — one file per subset (latin,
-   latin-ext for ₦ and accented letters, vietnamese for Yoruba ẹ/ọ, …).
+1. Put the `.woff2` files in `theme/fonts/`, one file per subset (latin; latin-ext for
+   currency signs such as ₦ and for accented letters; vietnamese for dotted letters such as
+   Yoruba ẹ and ọ; …).
 2. Declare them in `theme/fonts/fonts.css` with `@font-face` — `font-display:
    swap` and the subset's `unicode-range`, so a browser downloads only the files the
    page's text needs.
@@ -547,7 +594,7 @@ How to add one:
    `.theme-<slug> { --my-font: "Jost", "Jost Fallback"; }`.
 4. `import './fonts/fonts.css';` at the top of `layout.tsx`, before `theme.css`.
 
-Never `preload` a theme font: every theme's layout is in every store's bundle, so a preload downloads it on every store, whatever its theme.
+Never `preload` a theme font. Every theme's layout is in every store's bundle, so a preload would download the font on every store, whatever its theme.
 
 ## Locales
 
@@ -637,16 +684,29 @@ Use browser DevTools device toolbar to verify at:
 
 ## Manifest
 
-`manifest.ts` declares your theme's metadata, variants, and image dimensions:
+`manifest.ts` declares your theme's metadata, variants, design tokens, English strings and
+image dimensions. The starter's `theme/manifest.ts` is the working minimum; this is its
+shape:
 
 ```typescript
 import type { ThemeManifest } from '@usequeek/theme-kit/types/theme';
+import strings from './locales/en.default.json';
 
 const manifest: ThemeManifest = {
   name: 'My Theme',
   slug: 'my-theme',
   description: 'One-line theme description for the theme picker',
   version: '1.0.0',
+  strings,                       // the theme's English, see Locales
+  tokens: {                      // the theme's default look; every dial a merchant can turn
+    color: { primary: '#111111', bg: '#ffffff', text: '#111111' },
+    type: { heading_font: 'Inter', body_font: 'Inter', scale_ratio: 1.25, heading_weight: 600, heading_case: 'none', heading_tracking: 0 },
+    space: { density: 'comfortable' },
+    shape: { radius: 'soft', border_weight: 'hairline' },
+    elevation: 'flat',
+    motion: 'subtle',
+    image: { fit: 'cover', filter: 'none', radius: 'soft' },
+  },
   variants: {
     content: [
       { id: 'default', label: 'Rich Text', default: true, purpose: 'Rich text with headings, lists, and formatting' },
@@ -662,6 +722,9 @@ const manifest: ThemeManifest = {
     footer: [
       { id: 'columns', label: 'Multi-Column', default: true, purpose: 'Full footer with link columns' },
       // ... more footer variants
+    ],
+    subscribe: [
+      { id: 'inline', label: 'Inline', default: true, purpose: 'Newsletter form rendered above the footer' },
     ],
     products: [
       { id: 'grid', label: 'Grid', default: true, purpose: 'Standard product grid layout' },
@@ -688,10 +751,19 @@ export default manifest;
 ```
 
 **Every variant you declare MUST have:**
-- `id` — unique slug for this variant
-- `label` — human-readable name shown in the merchant Section Library
-- `purpose` — one sentence (under 80 chars) explaining WHEN to use this variant. This is searchable in the Section Library drawer.
-- `default` — (optional) mark one variant per scope as the default
+- `id`: unique slug within its scope
+- `label`: human-readable name shown in the merchant Section Library
+- `purpose`: one sentence, under 80 characters, saying WHEN to use this variant. It is searchable in the Section Library drawer, and Queek's AI reads it when it composes a store, so it is checked as template copy (see [Templates](#templates)).
+- `default`: (optional) marks one variant per scope as the default
+
+**Every variant should also declare:**
+- `fields`: the data fields its component reads, as `{ title: { type: 'string' } }` or the short form `title: 'string'`. `theme/field-parity` fails a field nothing reads, and a field read but not declared.
+- `editable`: the design-token paths a merchant's edits visibly change in this variant (`['space.density', 'image.radius']`). Declare only the tokens the variant's CSS really consumes through `var(--…)`.
+
+**The manifest must also have:**
+- a `tokens` block with every dimension set (`theme/design-tokens`);
+- a `subscribe` scope with exactly one `default: true` variant. A theme without one silently loses the newsletter app (`theme/subscribe-scope`);
+- an implementation in `index.ts`'s `variantImplementations` for every declared variant, and a declaration for every implementation (`theme/variant-parity`).
 
 **Bump `version`** when you make visual changes to existing variants. This signals Queek to re-capture thumbnails.
 
@@ -723,17 +795,17 @@ These three optional per-variant fields tell Queek's AI store builder which vari
 
 ## demo.json
 
-Must mirror the vendor bootstrap shape. Required minimums:
+It has the shape of a live vendor's data, and the checker holds it to these minimums:
 
 | Field | Minimum | Notes |
 |-------|---------|-------|
 | `profile.slug` | — | Must match the theme slug |
 | `config.theme` | — | Must match the theme slug |
-| `products` | 6 | Include galleries, reviews, pricing. Spread `flags.featured` and `flags.is_new` |
+| `products` | 6 | Include galleries, reviews, pricing. Spread `flags.featured` and `flags.is_new`. Every `shop_id` equals `profile.id` |
 | `categories` | 3 | Each with an image |
 | `posts` | 1 | With cover image |
-| `pages.home` | — | MUST include ALL component types (see Homepage Requirement above) |
-| `menus` | 1 | Header menu with Collections, About, Blog, Contact |
+| `pages` | 4 | `home` and three more; each design also ships `about`, `sales` and `landing` (see Templates) |
+| `menus` | 1 | A header menu to the shop, collections, blog and your pages |
 
 <a id="alternative-demo-stores"></a>
 
@@ -996,16 +1068,17 @@ Rules for template authors:
 ever submitted:
 
 - the skeleton's products: any demo product whose `slug` starts with `placeholder-`;
-- the skeleton's six photos, `media.usequeek.com/theme-assets/_bare/…` (rehosted
-  copies, so a theme using the originals is not caught);
+- the skeleton's placeholder photos, `media.usequeek.com/theme-assets/_bare/…`, matched by
+  their exact URLs;
 - a theme `description` in `theme.config.ts` that starts "Replace before publishing"
   (what `npm create @usequeek/theme` writes; each template's own placeholder
   description is `theme/template-description`'s).
 
-Every theme's preview must look like itself; shared stand-ins would make every store
-look the same. So a theme scaffolded from the skeleton with
-`npm create @usequeek/theme` fails this rule until its author replaces them: it is
-the first item on the to-do list, not a fault in the scaffold.
+Every theme's preview must look like itself, and shared stand-ins would make every store
+look the same. A theme scaffolded with `npm create @usequeek/theme` therefore fails this
+rule until you replace them. That is the first item on your to-do list, not a fault in the
+scaffold. The starter repository itself fails it on purpose, so an unedited copy cannot be
+submitted.
 
 ## theme.png
 
@@ -1043,9 +1116,10 @@ theme/demo.json
            Docs: https://github.com/usequeek/theme-starter/blob/main/docs/THEME.md#placeholder-content
 ```
 
-**These are the rules Queek runs when you submit**, except the few that need
-Queek's side; the report lists them at the end. There is no second definition of
-"valid" to pass locally and fail on submission.
+**These are the rules Queek runs when you submit.** A few need Queek's side (the
+demo-art host check and the two listed under the rule index); the report lists them at
+the end. Beyond those there is no second definition of "valid" to pass locally and fail
+on submission.
 
 **A theme publishes only when every blocking finding is clear** — no partial
 publish. A variant that does not render is not quietly dropped, because Queek
@@ -1057,9 +1131,32 @@ becomes a hole in a vendor's storefront.
 warnings. The exit code is non-zero while any error blocks. Point your tooling at
 it and iterate until `summary.errors` is 0.
 
-Theme compliance checks include:
-- All required files present (`gallery.tsx`, `products.tsx`, `categories.tsx`, `content-variants.tsx`)
-- `manifest.ts` declares valid variants with `id`, `label`, `purpose`
-- `demo.json` homepage includes all required component types
-- `ThemeModule` exports match the contract (getBlock, getHeader, getFooter, pages, blocks)
-- No imports from `@queekai/client-sdk` or other themes
+### Rule index
+
+| Rule | Checks |
+|---|---|
+| `theme/structure` | Every required file, block, page and shell is present |
+| `theme/module-contract` | The default export is annotated `ThemeModule` |
+| `theme/identity` | Manifest, config, demo and directory agree on the slug |
+| `theme/core-boundary` | No SDK, Next.js or app-code imports; no direct API calls; no store mutations |
+| `theme/code-quality` | Logo is a link, menu links use `menuItemToHref()`, client directives, no raw `<img>`, no cross-theme imports |
+| `theme/footer-shows-powered-by` | Every footer variant renders `<PoweredByQueek />` |
+| `theme/product-page-places-metafields` | The product page places `<ProductMetafields />` |
+| `theme/markdown-html` | `renderMarkdown` output is rendered as children |
+| `theme/vendor-facts` | A vendor's tagline, address, phone, email and description never fall back to your words |
+| `theme/fonts-self-hosted` | Fonts ship as files in the theme |
+| `theme/variant-parity`, `theme/field-parity` | Manifest and `index.ts` agree on variants; each variant declares the fields it reads |
+| `theme/design-tokens` | A complete `tokens` block that `theme.css` actually uses |
+| `theme/selection-metadata` | `best_for`, `auto_pick` and `min_images` are valid |
+| `theme/subscribe-scope` | A `subscribe` scope with exactly one default |
+| `theme/demo-store`, `theme/demo-stores` | Demo stores are complete, name this theme, and match `theme.config.ts` |
+| `theme/demo-completeness`, `theme/demo-block-types`, `theme/composition-variants` | Every variant is shown; every section is a renderable block type and a declared variant |
+| `theme/demo-art-hosting` | Demo images are on Queek's CDN (submission run only) |
+| `theme/template-description`, `theme/template-business`, `theme/template-designs`, `theme/template-versions`, `theme/template-pages`, `theme/template-chrome`, `theme/template-style`, `theme/template-screenshot` | The template and design rules in [Templates](#templates) |
+| `theme/template-copy` | Demo copy carries no store identity, offer or promise |
+| `theme/placeholder-content` | No starter placeholders remain |
+| `theme/no-hardcoded-strings`, `theme/locale-key-exists`, `theme/locale-key-naming`, `theme/locale-file-parity`, `theme/locale-key-unused` | Every printed word comes from `t()`; the locale files are well formed |
+
+Two things only Queek can check, listed at the end of every report: that the design is its
+own and not a copy of an existing Queek theme, and that every declared variant renders
+visible content with sample data.
