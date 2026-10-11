@@ -15,7 +15,12 @@ Data comes only from the kit: `useStorefront()` (vendor, config, menus), `usePro
 `useShop`, `useCategories`, `useCart`. Links: `menuItemToHref()`; images: `<Image />`.
 Never import `next/*`; `Link`, `useRouter` and `usePathname` come from `@usequeek/theme-kit/navigation`.
 
-Photos: licensed and unique to this theme (your own, or a free licence such as Unsplash).
+Manifest: every variant needs a renderer in `index.ts` and declares exactly the fields it
+reads; the manifest also needs a `tokens` block and a `subscribe` scope with one default.
+Style from the tokens (`var(--fs-*)`, `var(--space-*)`, `var(--radius-*)`), never fixed sizes.
+Fonts ship as files in `theme/fonts/`, never from a remote stylesheet or `next/font/*`.
+
+Photos: licensed and unique to this theme (your own, or a free licence that allows commercial use).
 Never another store's or a brand's photography, and never the starter's placeholders.
 
 Copy in demo stores is a template: true of any store in that business. No store name,

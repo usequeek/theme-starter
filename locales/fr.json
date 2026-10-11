@@ -1,5 +1,4 @@
 {
-  "_example": "SAMPLE translation — copy this file to theme/locales/fr.json and translate the values. The host loads theme/locales/{lang}.json per shopper locale; anything missing falls back to theme/locales/en.default.json (English). Keys, plurals and grammar must stay exactly as documented in the README's Translatable text section.",
   "header.nav": "Principal",
   "header.cart.label": "Panier",
   "header.cart.count": {

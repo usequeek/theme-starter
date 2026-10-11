@@ -29,8 +29,9 @@ https://docs.usequeek.com/docs/themes (every page as Markdown: https://docs.useq
   (`theme/template-copy`). Queek publishes a template's copy onto new stores unchanged.
 - The starter's placeholder products and photos (`theme/placeholder-content`). Every
   template needs its own products and licensed photos — never another store's or a brand's.
-- A raw `<img>` (use `<Image />` from the kit), or `next/font/google` (ship font files).
+- A raw `<img>` (use `<Image />` from the kit), or any remote font loading, `next/font/google` included (ship font files in `theme/fonts/`).
 - Any `next/*` import; `Link`, `useRouter` and `usePathname` come from `@usequeek/theme-kit/navigation`.
+- Importing app code (`@/…`) or a path outside `theme/`. A theme imports React, the kit and its own files.
 
 ## Templates and designs
 
@@ -40,6 +41,12 @@ A template is one business (food, hair); each demo store is a design of a templa
 `docs/business-vocabulary.json`. A whole business leads with its category (`fashion`);
 a niche names only its product keys. No two designs may share a home page. Each needs
 about, sales and landing pages and a description of at most 300 characters.
+
+## Manifest
+
+Every variant in `theme/manifest.ts` needs a renderer in `theme/index.ts` and declares
+exactly the fields it reads. The manifest also needs a `tokens` block and a `subscribe`
+scope with one default variant.
 
 ## Style
 

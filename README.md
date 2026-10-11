@@ -28,6 +28,7 @@ A theme is React and CSS. You never configure Next.js; the preview runs it for y
 |---|---|
 | `npm run dev` | Preview the theme as a whole store: every page of every demo store. Edits reload the page. |
 | `npm run check` | Check it against the Queek theme contract, the rules Queek runs when you submit. |
+| `npm run screenshot` | Capture every design's first screen at 1280×800: `theme/theme.jpg` and `theme/demos/<id>.jpg`. |
 | `npm run typecheck` | TypeScript. |
 | `npm run package` | Zip the theme for submission. |
 
@@ -93,9 +94,9 @@ use the same hooks they will use in production; only the source of the data chan
 ### Rules that get a theme rejected
 
 - Never call an API or the SDK. Use the kit's hooks.
-- Never import from outside `@usequeek/theme-kit`, except React. That includes Next.js:
-  `Link`, `useRouter` and `usePathname` come from `@usequeek/theme-kit/navigation`. If the kit
-  lacks something you need, ask for it.
+- Import only React, `@usequeek/theme-kit` and your own files (relative paths inside `theme/`).
+  That excludes Next.js: `Link`, `useRouter` and `usePathname` come from
+  `@usequeek/theme-kit/navigation`. If the kit lacks something you need, ask for it.
 - Never render data the store should supply. A section with hard-coded products looks right
   here and is empty on a real store.
 - Never print copy a merchant cannot change. Take it from the section's data, and render
@@ -112,9 +113,10 @@ your theme's own chrome is translatable.
 File layout: `theme/locales/en.default.json` holds every key with its English
 value (this skeleton's file is the template — copy it and change the values,
 never the keys). Each extra language is `theme/locales/{lang}.json` with the
-same keys; `locales/fr.json` at this repo's root is a worked French example to
-copy from. A shopper whose language has no file, or a key missing from it,
-reads the English default value — never a blank, never the raw key.
+same keys. `locales/fr.json` at this repo's root is a worked French example: copy it to
+`theme/locales/fr.json` and translate the values. A shopper whose language has no file,
+or a key missing from it, reads the English default value, never a blank and never the
+raw key.
 
 REQUIRED: reference that file from your theme manifest, or your English is
 blank outside the vendor layout (preview hosts pass no dictionaries of their
