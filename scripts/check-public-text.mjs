@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Public-text guard: fails when a tracked text file carries an internal
-// reference or a secret-shaped string. Zero dependencies.
+// reference, another commerce platform's name, or a secret-shaped string. Zero
+// dependencies.
 //
 //   node scripts/check-public-text.mjs [repo-dir]
 //
@@ -27,6 +28,7 @@ export const RULES = [
   { id: "internal-person", re: /found[e]r/i },
   { id: "local-path", re: /\/User[s]\/[A-Za-z]/ },
   { id: "rendering-bug", re: /\[object Objec[t]\]/i },
+  { id: "competitor-name", re: /Shopif[y]|WooCommerc[e]|BigCommerc[e]|Magent[o]|Squarespac[e]|Webflo[w]|Salesforc[e]|Saleo[r]|\bEts[y]\b|\bWi[x]\b/i },
   { id: "plan-id", re: /plan T[0-9]/i },
   { id: "decision-id", re: /decision [0-9]+/i },
   { id: "secret-key", re: /sk_(live|test)_[A-Za-z0-9]{10,}/i, secret: true },

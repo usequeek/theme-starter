@@ -17,6 +17,7 @@ const LEAKS = {
   "internal-person": word("the ", "found", "er decided"),
   "local-path": word("/Us", "ers/", "someone/project"),
   "rendering-bug": word("[object ", "Object]"),
+  "competitor-name": word("works like ", "Shop", "ify"),
   "plan-id": word("plan ", "T2"),
   "decision-id": word("decision ", "4"),
 };
