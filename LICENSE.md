@@ -1,4 +1,4 @@
-Copyright (c) 2026-present Queek
+Copyright (c) 2026-present Queekx Technology LTD
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
