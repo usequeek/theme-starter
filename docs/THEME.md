@@ -125,7 +125,7 @@ Themes provide layouts, styles, and visual presentation. They NEVER implement au
 
 ## What themes MUST NOT do
 
-- Import `@queekai/client-sdk` or `@usequeek/theme-kit/sdk/*`
+- Import `@usequeek/client-sdk` or `@usequeek/theme-kit/sdk/*`
 - Call API endpoints directly (no `fetch`, no `axios`, no `client.get/post`)
 - Mutate core stores (`setUser`, `clearShopCart`, `setDeliveryMode`, etc.)
 - Re-implement auth flow (phone/OTP/signup logic)
